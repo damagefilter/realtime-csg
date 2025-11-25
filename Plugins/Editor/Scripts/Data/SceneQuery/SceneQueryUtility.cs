@@ -43,7 +43,7 @@ namespace InternalRealtimeCSG
 				return scene.GetRootGameObjects();
 			
 			var rootLookup = new HashSet<Transform>();
-			var transforms = Object.FindObjectsOfType<Transform>();
+			var transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 			for (int i = 0; i < transforms.Length;i++)
 				rootLookup.Add(transforms[i].root);
 

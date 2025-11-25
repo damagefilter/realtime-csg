@@ -157,12 +157,10 @@ namespace RealtimeCSG
 		internal static CSGModel CreateCSGModel(GameObject gameObject)
 		{
 			var model = gameObject.AddComponent<CSGModel>();
-			StaticEditorFlags defaultFlags = //StaticEditorFlags.LightmapStatic |
-												StaticEditorFlags.BatchingStatic |
-												StaticEditorFlags.NavigationStatic |
-												StaticEditorFlags.OccludeeStatic |
-												StaticEditorFlags.OffMeshLinkGeneration |
-												StaticEditorFlags.ReflectionProbeStatic;
+            var defaultFlags = StaticEditorFlags.BatchingStatic |
+                               StaticEditorFlags.OccluderStatic |
+                               StaticEditorFlags.OccludeeStatic |
+                               StaticEditorFlags.ReflectionProbeStatic;
 			GameObjectUtility.SetStaticEditorFlags(gameObject, defaultFlags);
 			return model;
 		}

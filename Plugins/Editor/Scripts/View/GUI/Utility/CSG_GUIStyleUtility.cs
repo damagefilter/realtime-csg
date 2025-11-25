@@ -99,7 +99,7 @@ namespace RealtimeCSG
 
 		public static ToolTip PopOutTooltip = new ToolTip("Pop out tool window",
 														  "Click this to turn this into a floating tool window.\n" +
-														  "Close that tool window to get the in scene tool window back.\n Trying to close? CTRL+F3", new KeyEvent(KeyCode.F2, EventModifiers.Control));
+														  "Close that tool window to get the in scene tool window back", new KeyEvent(KeyCode.F2, EventModifiers.Control));
 
 		const string csgAdditionTooltip = "Addition";
 		const string csgSubtractionTooltip = "Subtraction";
@@ -359,13 +359,6 @@ namespace RealtimeCSG
 			unpaddedWindow.padding.left = 2;
 			unpaddedWindow.padding.bottom = 2;
 
-
-			emptyMaterialStyle = new GUIStyle(GUIStyle.none);
-			emptyMaterialStyle.normal.background = MaterialUtility.CreateSolidColorTexture(2, 2, Color.black);
-
-
-			selectionRectStyle = GetStyle("selectionRect");
-
 			winBtnClose = new GUIStyle(GUI.skin.verticalScrollbarUpButton);
 			winBtnClose.normal.background = Resources.Load<Texture2D>("GUI/WinBtnClose");
 			winBtnClose.onActive.background =
@@ -381,6 +374,14 @@ namespace RealtimeCSG
 			winBtnClose.overflow.top = 0;
 			winBtnClose.overflow.right = 0;
 			winBtnClose.overflow.left = 0;
+
+
+			emptyMaterialStyle = new GUIStyle(GUIStyle.none);
+			emptyMaterialStyle.normal.background = MaterialUtility.CreateSolidColorTexture(2, 2, Color.black);
+
+
+			selectionRectStyle = GetStyle("selectionRect");
+
 
 			var redToolbarDropDown = GetStyle("toolbarDropDown");
 

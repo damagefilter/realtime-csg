@@ -129,11 +129,9 @@ if (currentPrefabStage != null)
 				transform.localScale	= MathConstants.oneVector3;
 				transform.localRotation = Quaternion.identity;
 
-				var defaultFlags = //StaticEditorFlags.LightmapStatic |
-									StaticEditorFlags.BatchingStatic |
-									StaticEditorFlags.NavigationStatic |
+				var defaultFlags = StaticEditorFlags.BatchingStatic |
+									StaticEditorFlags.OccluderStatic |
 									StaticEditorFlags.OccludeeStatic |
-									StaticEditorFlags.OffMeshLinkGeneration |
 									StaticEditorFlags.ReflectionProbeStatic;
 				GameObjectUtility.SetStaticEditorFlags(sceneState.DefaultModel.gameObject, defaultFlags);
 

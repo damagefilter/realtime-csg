@@ -78,7 +78,7 @@ namespace RealtimeCSG
 		[NonSerialized] protected bool			isFinished			= false;
 		[NonSerialized] protected bool			mouseIsDragging		= false;		
 		[NonSerialized] protected bool			ignoreOrbit			= false;
-		[NonSerialized] ViewTool				previousViewTool	= ViewTool.Pan;
+		// [NonSerialized] ViewTool				previousViewTool	= ViewTool.Pan;
 
 		[NonSerialized] Quaternion				originalGridRotation;
 		[NonSerialized] Vector3					originalGridCenter;

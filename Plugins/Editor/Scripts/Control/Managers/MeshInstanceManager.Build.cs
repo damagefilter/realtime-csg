@@ -13,7 +13,7 @@ namespace InternalRealtimeCSG
         internal static void OnBuild()
         {
             // apparently only way to determine current scene while post processing a scene
-            var randomObject = UnityEngine.Object.FindObjectOfType<Transform>();
+            var randomObject = UnityEngine.Object.FindAnyObjectByType<Transform>(FindObjectsInactive.Include);
             if (!randomObject)
                 return;
 

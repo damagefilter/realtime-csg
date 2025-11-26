@@ -182,7 +182,7 @@ namespace RealtimeCSG
 		}
 		
 		
-		public static string		ToRoundedDistanceString	(DistanceUnit unit, Vector3 value, bool lockX = false, bool lockY = false, bool lockZ = false)
+		private static string		ToRoundedDistanceString	(DistanceUnit unit, Vector3 value, bool lockX = false, bool lockY = false, bool lockZ = false)
 		{
 			var builder		= new StringBuilder();
 			var unit_string = GetUnitString(unit);

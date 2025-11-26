@@ -284,7 +284,7 @@ namespace RealtimeCSG
 			
 			for (int i = 0; i < keyArray.Length; i++)
 			{
-				keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToList().ToArray();
+				keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToArray();
 			}
 		}
 
@@ -295,7 +295,7 @@ namespace RealtimeCSG
 
 			for (int i = 0; i < keyArray.Length; i++)
 			{
-				keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToList().ToArray();
+				keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToArray();
 			}
 			 
 			for (int i = 0; i < keyArray.Length; i++)
@@ -305,7 +305,7 @@ namespace RealtimeCSG
 
 				if (string.IsNullOrEmpty(key_value))
 				{
-					keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToList().ToArray();
+					keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToArray();
 					continue;
 				}
 				try
@@ -328,7 +328,7 @@ namespace RealtimeCSG
 				}
 				catch
 				{
-					keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToList().ToArray();
+					keyArray[i].keyEvent.keys = keyArray[i].keyEvent.defaultKeys.ToArray();
 				}
 			}
 		}

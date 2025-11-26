@@ -54,23 +54,11 @@ namespace RealtimeCSG
 
 			EditorApplication.update					-= OnFirstUpdate;
 			EditorApplication.update					+= OnFirstUpdate;
-
-#if UNITY_2018_1_OR_NEWER
-			EditorApplication.hierarchyChanged	-= OnHierarchyWindowChanged;
+            
+            EditorApplication.hierarchyChanged	-= OnHierarchyWindowChanged;
             EditorApplication.hierarchyChanged += OnHierarchyWindowChanged;
 
-#else
-			EditorApplication.hierarchyWindowChanged	-= OnHierarchyWindowChanged;
-			EditorApplication.hierarchyWindowChanged	+= OnHierarchyWindowChanged;
-#endif
-
-#if UNITY_2021_2_OR_NEWER // SceneManagement.PrefabStage was moved out of experimental in 2021.2
             UnityEditor.SceneManagement.PrefabStage.prefabSaving += OnPrefabSaving;
-#else
-    #if UNITY_2018_3_OR_NEWER // SceneManagement.PrefabStage was introduced in 2018.3 with nested prefabs
-            UnityEditor.Experimental.SceneManagement.PrefabStage.prefabSaving += OnPrefabSaving;
-    #endif
-#endif
 
             EditorApplication.hierarchyWindowItemOnGUI	-= HierarchyWindowItemGUI.OnHierarchyWindowItemOnGUI;
 			EditorApplication.hierarchyWindowItemOnGUI	+= HierarchyWindowItemGUI.OnHierarchyWindowItemOnGUI;
@@ -209,13 +197,8 @@ namespace RealtimeCSG
 				return;
 			}
 
-#if UNITY_2019_1_OR_NEWER
-			SceneView.duringSceneGui		-= SceneViewEventHandler.OnScene;
-			SceneView.duringSceneGui		+= SceneViewEventHandler.OnScene;
-#else
-			SceneView.onSceneGUIDelegate	-= SceneViewEventHandler.OnScene;
-			SceneView.onSceneGUIDelegate	+= SceneViewEventHandler.OnScene;
-#endif
+            SceneView.duringSceneGui		-= SceneViewEventHandler.OnScene;
+            SceneView.duringSceneGui		+= SceneViewEventHandler.OnScene;
             Undo.undoRedoPerformed			-= UndoRedoPerformed;
 			Undo.undoRedoPerformed			+= UndoRedoPerformed;
 			

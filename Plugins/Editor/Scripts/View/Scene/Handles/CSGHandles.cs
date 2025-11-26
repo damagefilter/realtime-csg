@@ -34,24 +34,7 @@ namespace RealtimeCSG.Helpers
 
 		public static void CubeHandleCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
 		{
-#if UNITY_5_6_OR_NEWER
-			Handles.CubeHandleCap(controlID, position, rotation, size, eventType);
-#else
-			switch (eventType)
-			{
-				case EventType.Layout:
-				{
-					HandleUtility.AddControl(controlID, HandleUtility.DistanceToCircle(position, size * .1f));
-					break;
-				}
-				case EventType.Repaint:
-				{ 
-					var direction = rotation * Vector3.forward;
-					Handles.CubeCap(controlID, position, Quaternion.LookRotation(direction), size * .2f);
-					break;
-				}
-			}
-#endif
+            Handles.CubeHandleCap(controlID, position, rotation, size, eventType);
 		}
 		
 		public static void DiamondDotCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)

@@ -1348,1042 +1348,1128 @@ namespace RealtimeCSG
 
 		public void HandleEvents(SceneView sceneView, Rect sceneRect)
 		{
-			var camera				= sceneView.camera;
-			var inCamera			= (camera != null) && camera.pixelRect.Contains(Event.current.mousePosition);
+            var camera = sceneView.camera;
+            var inCamera = (camera != null) && camera.pixelRect.Contains(Event.current.mousePosition);
 
 			var originalEventType = Event.current.type;
-			if		(originalEventType == EventType.MouseMove) { mouseIsDragging	= false; draggingOnCamera = null; realMousePosition   = Event.current.mousePosition; }
-			else if (originalEventType == EventType.MouseDown) { mouseIsDragging	= false; draggingOnCamera = camera; realMousePosition = prevMousePos = Event.current.mousePosition; }
-			else if (originalEventType == EventType.MouseUp)   { draggingOnCamera	= null; }
-			else if (originalEventType == EventType.MouseDrag)
-			{
-				if (!mouseIsDragging && (prevMousePos - Event.current.mousePosition).magnitude > 4.0f)
-				{
-					mouseIsDragging = true;
-				}
-				realMousePosition += Event.current.delta;
-			}
+            if (originalEventType == EventType.MouseMove) {
+                mouseIsDragging = false;
+                draggingOnCamera = null;
+                realMousePosition = Event.current.mousePosition;
+            }
+            else if (originalEventType == EventType.MouseDown) {
+                mouseIsDragging = false;
+                draggingOnCamera = camera;
+                realMousePosition = prevMousePos = Event.current.mousePosition;
+            }
+            else if (originalEventType == EventType.MouseUp) {
+                draggingOnCamera = null;
+            }
+            else if (originalEventType == EventType.MouseDrag) {
+                if (!mouseIsDragging && (prevMousePos - Event.current.mousePosition).magnitude > 4.0f) {
+                    mouseIsDragging = true;
+                }
 
-			try
-			{
-				if (draggingOnCamera != null) inCamera = false;
-				if (draggingOnCamera == camera) inCamera = true;
-				
-				//if (Event.current.type == EventType.Layout)
-					CreateControlIDs(inCamera);
-				
-				UpdateTransforms(camera);
-				if (Selection.activeTransform != null)
-				{
-					if (activeSpaceMatrices != null)
-					{
-						UpdateBoundsCenter(activeSpaceMatrices.activeLocalToWorld);
-					}
-				}
+                realMousePosition += Event.current.delta;
+            }
 
-				if (Event.current.type == EventType.Repaint)
-				{
-					if (!SceneDragToolManager.IsDraggingObjectInScene)
-					{
-						if (sceneView)
-						{
-#if UNITY_2020_2_OR_NEWER
-							if (!Tools.viewToolActive)
-#else
+            try {
+                if (draggingOnCamera != null) inCamera = false;
+                if (draggingOnCamera == camera) inCamera = true;
+
+                //if (Event.current.type == EventType.Layout)
+                CreateControlIDs(inCamera);
+
+                UpdateTransforms(camera);
+                if (Selection.activeTransform != null) {
+                    if (activeSpaceMatrices != null) {
+                        UpdateBoundsCenter(activeSpaceMatrices.activeLocalToWorld);
+                    }
+                }
+
+                if (Event.current.type == EventType.Repaint) {
+                    if (!SceneDragToolManager.IsDraggingObjectInScene) {
+                        if (sceneView) {
+                            #if UNITY_2020_2_OR_NEWER
+                            if (!Tools.viewToolActive)
+                                #else
 							if (Tools.current != Tool.View && !Event.current.alt && Event.current.button != 1 && Event.current.button != 2)
-#endif
-							{
-								var windowRect = new Rect(0, 0, sceneView.position.width, sceneView.position.height - CSG_GUIStyleUtility.BottomToolBarHeight);
-								EditorGUIUtility.AddCursorRect(windowRect, currentCursor);
-							}
-						}
+                                #endif
+                            {
+                                var windowRect = new Rect(0, 0, sceneView.position.width, sceneView.position.height - CSG_GUIStyleUtility.BottomToolBarHeight);
+                                EditorGUIUtility.AddCursorRect(windowRect, currentCursor);
+                            }
+                        }
 
-						if (!mouseIsDragging &&
-							(toolEditMode == ToolEditMode.MovingObject ||
-							toolEditMode == ToolEditMode.CloneDragging) &&
-							RealtimeCSG.CSGGrid.ForceGrid &&
-							startCamera != null &&
-							startCamera == camera)
-						{
-							if ((prevModifiers & EventModifiers.Shift) != (Event.current.modifiers & EventModifiers.Shift) 
-								//|| prevYMode != RealtimeCSG.Grid.YMoveModeActive
-								)
-							{
-								activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
-								UpdateGridOrientation(realMousePosition);
-							}
-						}
+                        if (!mouseIsDragging &&
+                            (toolEditMode == ToolEditMode.MovingObject ||
+                             toolEditMode == ToolEditMode.CloneDragging) &&
+                            RealtimeCSG.CSGGrid.ForceGrid &&
+                            startCamera != null &&
+                            startCamera == camera) {
+                            if ((prevModifiers & EventModifiers.Shift) != (Event.current.modifiers & EventModifiers.Shift)
+                                //|| prevYMode != RealtimeCSG.Grid.YMoveModeActive
+                               ) {
+                                activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
+                                UpdateGridOrientation(realMousePosition);
+                            }
+                        }
 
-						if (Tools.current == Tool.Rotate && 
-							hoverOnBoundsEdge != -1 && 
-							mouseIsDragging)
-							RealtimeCSG.CSGGrid.ForceGrid = false;
+                        if (Tools.current == Tool.Rotate &&
+                            hoverOnBoundsEdge != -1 &&
+                            mouseIsDragging)
+                            RealtimeCSG.CSGGrid.ForceGrid = false;
 
-						if (!mouseIsDragging)
-						{
-							UpdateTargetBounds();
-						}
-					}
+                        if (!mouseIsDragging) {
+                            UpdateTargetBounds();
+                        }
+                    }
 
-					UpdateTargetBoundsHandles(camera);
-
-
-			
-					var oldMatrix = Handles.matrix;
-					Handles.matrix = MathConstants.identityMatrix;
-
-					if (lastLineMeshGeneration != InternalCSGModelManager.MeshGeneration)
-					{
-						lastLineMeshGeneration = InternalCSGModelManager.MeshGeneration;
-
-						var brushTransformations	= new Matrix4x4[brushes.Length];
-						var brushNodeIDs			= new Int32[brushes.Length];
-						for (int i = brushes.Length - 1; i >= 0; i--)
-						{
-							var brush = brushes[i];
-							if (brush.brushNodeID == CSGNode.InvalidNodeID ||	// could be a prefab
-								brush.compareTransformation == null ||
-								brush.ChildData == null ||
-								!brush.ChildData.ModelTransform)
-							{
-								ArrayUtility.RemoveAt(ref brushTransformations, i);
-								ArrayUtility.RemoveAt(ref brushNodeIDs, i);
-								continue;
-							}
-							brushTransformations[i] = brush.compareTransformation.localToWorldMatrix;
-							brushNodeIDs[i] = brush.brushNodeID;
-						}
-						CSGRenderer.DrawSelectedBrushes(zTestLineMeshManager, noZTestLineMeshManager, brushNodeIDs, brushTransformations, ColorSettings.SelectedOutlines, GUIConstants.lineScale);
-					}
-					
-					MaterialUtility.LineAlphaMultiplier = 1.0f;
-					MaterialUtility.LineDashMultiplier = 2.0f;
-					MaterialUtility.LineThicknessMultiplier = 2.0f;
-					noZTestLineMeshManager.Render(MaterialUtility.NoZTestGenericLine);
-					MaterialUtility.LineDashMultiplier = 1.0f;
-					MaterialUtility.LineThicknessMultiplier = 1.0f;
-					zTestLineMeshManager.Render(MaterialUtility.ZTestGenericLine);
-				
-					if (!SceneDragToolManager.IsDraggingObjectInScene)
-					{
-						if (activeTransform == null)
-						{
-							Handles.matrix = oldMatrix;
-							return;
-						}
-						
-						if (activeSpaceMatrices == null)
-							activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
-
-						Color meshEdgeOutlineColor	= ColorSettings.MeshEdgeOutline;
-						Color boundOutlinesColor	= ColorSettings.BoundsOutlines;
-
-						if (!mouseIsDragging || (Tools.current != Tool.Rotate) || (hoverOnBoundsEdge == -1))
-						{
-							PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale * 2.0f, meshEdgeOutlineColor);
-							PaintUtility.DrawUnoccludedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, meshEdgeOutlineColor);
-							PaintUtility.DrawDottedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, boundOutlinesColor, 4.0f);
-							PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale, boundOutlinesColor);
-						}
-						
-						if (!sceneView.camera.orthographic && CSGSettings.GridVisible)
-						{
-							Handles.matrix = Matrix4x4.identity;
-
-							var indices = BoundsUtilities.AABBTopIndices;
-							var vertices = new Vector3[indices.Length];
-
-							float max = float.NegativeInfinity;
-							if (!mouseIsDragging || (Tools.current != Tool.Rotate))
-							{
-								for (int i = 0; i < indices.Length; i++)
-								{
-									var pt0 = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalPoints[i]);
-									var pt1 = RealtimeCSG.CSGGrid.CurrentGridPlane.Project(pt0);
-									max = Mathf.Max(max, (pt0.y - pt1.y));
-									PaintUtility.DrawDottedLine(pt0, pt1, boundOutlinesColor, 4.0f);
-									vertices[i] = pt1;
-								}
-							} else
-							{
-								for (int i = 0; i < indices.Length; i++)
-								{
-									var pt0 = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalPoints[i]);
-									var pt1 = RealtimeCSG.CSGGrid.CurrentGridPlane.Project(pt0);
-									max = Mathf.Max(max, (pt0.y - pt1.y));
-									vertices[i] = pt1;
-								}
-							}
-							
-							if (max > 0)
-							{
-								PaintUtility.DrawPolygon(vertices, ColorSettings.ShadowColor);
-								PaintUtility.DrawDottedWirePolygon(vertices, ColorSettings.ShadowOutlineColor);
-								PaintUtility.DrawWirePolygon(vertices, ColorSettings.ShadowOutlineColor);
-							} else
-							{
-								//PaintUtility.DrawPolygon(vertices, ShapeDrawingFill);
-								PaintUtility.DrawDottedWirePolygon(vertices, boundOutlinesColor);
-								//PaintUtility.DrawWirePolygon(vertices, boundOutlinesColor);
-							}
-						}
-
-						Handles.matrix = oldMatrix;
-							
-						if (//hoverOnBoundsEdge == -1 &&
-							(Tools.current == Tool.Scale || Tools.current == Tool.Rect) &&
-							(toolEditMode == ToolEditMode.SizingBounds || toolEditMode == ToolEditMode.None) && 
-							!cloneDragKeyPressed)
-						{
-							if (//!RealtimeCSG.Grid.YMoveModeActive &&
-								(hoverOnBoundsEdge != -1 || 
-								hoverOnBoundsCenter != -1 ||
-								!mouseIsDragging))
-							{
-								if (hoverOnBoundsCenter != -1)
-									RenderArrowCap(hoverOnBoundsCenter);
-
-								PaintUtility.DrawDoubleDots(camera, activeSpaceMatrices.activeLocalToWorld,
-															renderLocalCenterPoints,
-															renderLocalCenterPointSizes,
-															renderLocalCenterPointColors,
-															renderLocalCenterPoints.Length);
-
-								PaintUtility.DrawDoubleDots(camera, activeSpaceMatrices.activeLocalToWorld,
-															renderLocalEdgePoints,
-															renderLocalEdgePointSizes,
-															renderLocalEdgePointColors,
-															renderLocalEdgePoints.Length);
-							}
-							
-							if (camera != null)
-							{
-								bool showAxisX;
-								bool showAxisY;
-								bool showAxisZ;
-								if (hoverOnBoundsEdge != -1)
-								{
-									showAxisX = false;
-									showAxisY = false;
-									showAxisZ = false;
-									switch (BoundsUtilities.AABBEdgeAxis[hoverOnBoundsEdge][0])
-									{
-										case PrincipleAxis.X: showAxisX = true; break;
-										case PrincipleAxis.Y: showAxisY = true; break;
-										case PrincipleAxis.Z: showAxisZ = true; break;
-									}
-									switch (BoundsUtilities.AABBEdgeAxis[hoverOnBoundsEdge][1])
-									{
-										case PrincipleAxis.X: showAxisX = true; break;
-										case PrincipleAxis.Y: showAxisY = true; break;
-										case PrincipleAxis.Z: showAxisZ = true; break;
-									}
-								} else
-								if (hoverOnBoundsCenter != -1)
-								{
-									showAxisX = false;
-									showAxisY = false;
-									showAxisZ = false;
-									switch(BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter])
-									{
-										case PrincipleAxis.X: showAxisX = true; break;
-										case PrincipleAxis.Y: showAxisY = true; break;
-										case PrincipleAxis.Z: showAxisZ = true; break;
-									}
-								} else
-								{
-									showAxisX = true;
-									showAxisY = true;
-									showAxisZ = true;
-								}
-								
-								PaintUtility.RenderBoundsSizes(activeSpaceMatrices.activeWorldToLocal, activeSpaceMatrices.activeLocalToWorld, 
-																camera, targetLocalPoints, 
-																RealtimeCSG.CSGSettings.LockAxisX ? Color.red : Color.white, 
-																RealtimeCSG.CSGSettings.LockAxisY ? Color.red : Color.white, 
-																RealtimeCSG.CSGSettings.LockAxisZ ? Color.red : Color.white,
-																showAxisX, showAxisY, showAxisZ);
-							}
-						} else
-						if (Tools.current == Tool.Rotate)
-						{ 
-							if (hoverOnBoundsEdge != -1)
-							{
-								if (inCamera && !mouseIsDragging)
-								{
-									UpdateRotationCircle(sceneView, activeSpaceMatrices.activeLocalToWorld, realMousePosition);
-								}
-								if (!mouseIsDragging)
-									RenderHighlightedEdge(hoverOnBoundsEdge);
-								RenderRotationCircle(camera);
-							}
-						}
-					}
-				}
-
-				if (Selection.activeTransform != null)
-				{
-					if (Tools.current == Tool.Rotate)
-					{
-						if (worldSpacePivotCenterSet && HaveBrushSelection)
-						{
-							Vector3 newPivot = worldSpacePivotCenter;
-							EditorGUI.BeginChangeCheck();
-							{
-								var rotation = Tools.handleRotation;
-								newPivot = PaintUtility.HandlePivot(camera, newPivot, rotation, 
-									ColorSettings.BoundsEdgeHover, Tools.pivotMode == PivotMode.Pivot);
-							}
-							if (EditorGUI.EndChangeCheck())
-							{
-								ignorePivotChange = true;
-								SetPivotCenter(newPivot);
-							}
-							worldSpacePivotCenterSet = true;
-						}
-					} else
-					if (Tools.current == Tool.Move)
-					{
-						if (HaveSelection)
-						{
-							Vector3 newPosition = boundsCenter;
-							RealtimeCSG.Helpers.CSGHandles.InitFunction init = delegate
-							{
-								originalPoint = newPosition;
-								UpdateTargetInfo();
-								snapVertices = originalLocalTargetBounds.GetAllCorners();
-								for (int i = 0; i < snapVertices.Length; i++)
-									snapVertices[i] = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(snapVertices[i]);
-							};
-							RealtimeCSG.Helpers.CSGHandles.InitFunction shutdown = delegate
-							{
-								UpdateTargetInfo();
-							};
-							EditorGUI.BeginChangeCheck();
-							{
-								var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
-								newPosition = RealtimeCSG.Helpers.CSGHandles.PositionHandle(camera, newPosition,
-									Tools.handleRotation, activeSnappingMode, snapVertices: snapVertices, initFunction: init, shutdownFunction: shutdown);
-							}
-							if (EditorGUI.EndChangeCheck())
-							{
-								MoveCenter(originalPoint, newPosition);
-								UpdateTargetBounds();
-								UpdateTargetBoundsHandles(camera);
-							}
-						} else 
-							snapVertices = null;
-					}
-				}
-
-				switch (Event.current.type)
-				{
-					case EventType.ValidateCommand:
-					{
-						if (Keys.CloneDragActivate.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.HandleSceneValidate(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionX.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionY.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionZ.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.RotateSelectionLeft.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.RotateSelectionRight.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionLeft.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionRight.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionBack.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionForward.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionDown.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionUp.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.CenterPivot.IsKeyPressed()) { Event.current.Use(); break; }
-						break;
-					}
-
-					case EventType.KeyDown:
-					{
-						SceneQueryUtility.ClearDeepClick();
-						if (Tools.viewTool != ViewTool.FPS && Keys.CloneDragActivate.IsKeyPressed()) { cloneDragKeyPressed = true; Event.current.Use(); break; }
-						if (Keys.HandleSceneKeyDown(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionX.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionY.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionZ.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.RotateSelectionLeft.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.RotateSelectionRight.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionLeft.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionRight.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionBack.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionForward.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionDown.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.MoveSelectionUp.IsKeyPressed()) { Event.current.Use(); break; }
-						if (Keys.CenterPivot.IsKeyPressed()) { Event.current.Use(); break; }
-						break;
-					}
-
-					case EventType.KeyUp:
-					{
-						if (cloneDragKeyPressed && Keys.CloneDragActivate.IsKeyPressed()) { cloneDragKeyPressed = false; haveCloned = false; Event.current.Use(); break; }
-						if (Keys.HandleSceneKeyUp(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
-						if (Keys.FlipSelectionX.IsKeyPressed()) { FlipX(); Event.current.Use(); break; }
-						if (Keys.FlipSelectionY.IsKeyPressed()) { FlipY(); Event.current.Use(); break; }
-						if (Keys.FlipSelectionZ.IsKeyPressed()) { FlipZ(); Event.current.Use(); break; }
-
-						if (Keys.RotateSelectionLeft.IsKeyPressed())
-						{
-							UpdateTargetInfo();
-							var center = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalBounds.Center);
-							RotateObjects(topTransforms, center, MathConstants.upVector3,  RealtimeCSG.CSGSettings.SnapRotation);
-							Event.current.Use();
-							break;
-						}
-						if (Keys.RotateSelectionRight.IsKeyPressed())
-						{
-							UpdateTargetInfo();
-							var center = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalBounds.Center);
-							RotateObjects(topTransforms, center, MathConstants.upVector3, -RealtimeCSG.CSGSettings.SnapRotation);
-							Event.current.Use();
-							break;
-						}
-						
-						if (Keys.MoveSelectionLeft   .IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.rightVector3 * RealtimeCSG.CSGSettings.SnapVector.x); Event.current.Use(); break; }
-						if (Keys.MoveSelectionRight  .IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.leftVector3 * RealtimeCSG.CSGSettings.SnapVector.x); Event.current.Use(); break; }
-						if (Keys.MoveSelectionBack   .IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.forwardVector3 * RealtimeCSG.CSGSettings.SnapVector.z); Event.current.Use(); break; }
-						if (Keys.MoveSelectionForward.IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.backVector3 * RealtimeCSG.CSGSettings.SnapVector.z); Event.current.Use(); break; }
-						if (Keys.MoveSelectionDown   .IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.downVector3 * RealtimeCSG.CSGSettings.SnapVector.y); Event.current.Use(); break; }
-						if (Keys.MoveSelectionUp     .IsKeyPressed()) { UpdateTargetInfo(); MoveObjects(topTransforms, MathConstants.upVector3 * RealtimeCSG.CSGSettings.SnapVector.y); Event.current.Use(); break; }
-						if (Keys.CenterPivot         .IsKeyPressed()) { RecenterPivot(); break; }
-						break;
-					}
-
-					case EventType.MouseDown:
-					{
-						if (!sceneRect.Contains(Event.current.mousePosition))
-							break;
-						//mouseWasDownNot0 = Event.current.button != 0;
-						//mouseIsDownNot0  = (Event.current.button != 0);
-						if (GUIUtility.hotControl != 0 ||
-							Event.current.button != 0)
-							break;
-
-						toolEditMode = ToolEditMode.None;
-						extraDeltaMovement = MathConstants.zeroVector3;
-						activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
-
-						if (RealtimeCSG.CSGSettings.LockAxisX && 
-							RealtimeCSG.CSGSettings.LockAxisY && 
-							RealtimeCSG.CSGSettings.LockAxisZ)
-						{
-							EditModeManager.ShowMessage("All axi are disabled (X Y Z), cannot move.");
-							break;
-						}
-						if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3)
-						{
-							EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
-							break;
-						}
-
-						UpdateTargetInfo();
-						if (HaveTarget &&
-							(Tools.current == Tool.Rotate ||
-							 Tools.current == Tool.Scale ||
-							 Tools.current == Tool.Rect ||
-							 Tools.current == Tool.Move))// && Event.current.modifiers == EventModifiers.None)
-						{
-							int newControlID = -1;
-							if (hoverOnTarget != -1)
-							{
-								if (Event.current.modifiers == EventModifiers.None ||
-									 Event.current.modifiers == EventModifiers.Shift ||
-									 Event.current.modifiers == EventModifiers.Control ||
-									 Event.current.modifiers == (EventModifiers.Shift | EventModifiers.Control))
-								{
-									toolEditMode = ToolEditMode.MovingObject;
-									newControlID = brushControlIDs[hoverOnTarget];
-								}
-							} else
-							if (Tools.current != Tool.Move)
-							{
-								if (hoverOnBoundsCenter != -1)
-								{
-									if (Event.current.modifiers == EventModifiers.None)
-									{
-										toolEditMode = ToolEditMode.SizingBounds;
-										newControlID = targetBoundCenterIDs[hoverOnBoundsCenter];
-									}
-								} else
-								if (hoverOnBoundsEdge != -1)
-								{
-									if (Event.current.modifiers == EventModifiers.None)
-									{
-										toolEditMode = ToolEditMode.RotatingBounds;
-										newControlID = targetBoundEdgeIDs[hoverOnBoundsEdge];
-										rotateCurrentSnappedAngle = rotateStartAngle;
-									}
-								}
-							}
-							
-							if (newControlID != -1)
-							{
-								GUIUtility.hotControl = newControlID;
-								GUIUtility.keyboardControl = newControlID;
-								EditorGUIUtility.editingTextField = false;
-								Event.current.Use();
-								firstMove = true;
-								break;
-							}
-						}
-						break;
-					}
-
-					case EventType.MouseUp:
-					{
-						if (Event.current.button != 0)
-							break;
-						if (!mouseIsDragging)// && GUIUtility.hotControl == 0)
-						{/*
-							if (hoverOnTarget != -1 &&
-								hoverOnBoundsCenter != -1 &&
-								hoverOnBoundsEdge != -1)*/
-							{
-								SelectionUtility.DoSelectionClick(sceneView);
-								// We're doing manual selection, make sure to eat the event otherwise unity will run its own MouseUp for selection logic
-								Event.current.Use();
-							}
-						}
-						mouseIsDragging = false;
-						break;
-					}
-
-					case EventType.Layout:
-					{
-						UpdateMouseCursor();
-						try
-						{
-							if (inCamera && !mouseIsDragging &&
-								GUIUtility.hotControl == 0)
-							{
-								//var forward = camera.transform.forward.normalized;
-								//var view_is_2D = camera.orthographic && 
-								//				 (
-								//					(Mathf.Abs(forward.x) >= 1.0f - MathConstants.EqualityEpsilon) || 
-								//					(Mathf.Abs(forward.y) >= 1.0f - MathConstants.EqualityEpsilon) || 
-								//					(Mathf.Abs(forward.z) >= 1.0f - MathConstants.EqualityEpsilon)
-								//				 );
-
-								UpdateTargetBoundsHandles(camera);
-
-								activeTransform = Selection.activeTransform;
-								if (activeTransform != null)
-								{
-									activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
-
-									hoverOnTarget = -1;
-									hoverOnBoundsCenter = -1;
-									hoverOnBoundsEdge = -1;
-
-									var world_ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-									var ray_start = world_ray.origin;
-									var ray_vector = (world_ray.direction * (camera.farClipPlane - camera.nearClipPlane));
-									var ray_end = ray_start + ray_vector;
-
-									float min_distance = float.PositiveInfinity;
-									int closest_brush = -1;
-									for (int t = 0; t < brushes.Length; t++)
-									{
-										var brush = brushes[t];
-										var model_transform = parentModelTransforms[t];
-										if (model_transform == null)
-											continue;
-
-										var modelTransformation = model_transform.localToWorldMatrix;
-
-										LegacyBrushIntersection intersection;
-										if (SceneQueryUtility.FindBrushIntersection(brush, modelTransformation, ray_start, ray_end, out intersection))
-										{
-											var distance = (intersection.worldIntersection - ray_start).magnitude;
-											if (distance < min_distance)
-											{
-												min_distance = distance;
-												closest_brush = t;
-												hoverOverBrushIndex = t;
-												hoverIntersectionPoint = intersection.worldIntersection;
-											}
-										}
-									}
-
-
-									if (closest_brush == -1 && brushes.Length > 0)
-									{
-										var worldToLocal = activeSpaceMatrices.activeWorldToLocal;
-										Bounds bounds = new Bounds();
-										bounds.center = targetLocalBounds.Center;
-										bounds.size = targetLocalBounds.Size;
-
-										if (bounds.size.x != 0 &&
-											bounds.size.y != 0 &&
-											bounds.size.z != 0 &&
-											!float.IsNaN(bounds.size.x) &&
-											!float.IsNaN(bounds.size.y) &&
-											!float.IsNaN(bounds.size.z) &&
-											!float.IsInfinity(bounds.size.x) &&
-											!float.IsInfinity(bounds.size.y) &&
-											!float.IsInfinity(bounds.size.z))
-										{
-											var local_ray = world_ray;
-											local_ray.direction = worldToLocal.MultiplyVector(local_ray.direction);
-											local_ray.origin = worldToLocal.MultiplyPoint(local_ray.origin);
-
-											if (bounds.IntersectRay(local_ray))
-											{
-												closest_brush = 0;
-											}
-										}
-									}
-
-									if (closest_brush >= 0 && closest_brush <= brushes.Length)
-									{
-										HandleUtility.AddControl(brushControlIDs[closest_brush], 3.0f);
-									}
+                    UpdateTargetBoundsHandles(camera);
 
 
 
-									MouseCursor newCursor = MouseCursor.Arrow;
-									bool foundControl = false;
-									int nearestControl = -1;
+                    var oldMatrix = Handles.matrix;
+                    Handles.matrix = MathConstants.identityMatrix;
+
+                    if (lastLineMeshGeneration != InternalCSGModelManager.MeshGeneration) {
+                        lastLineMeshGeneration = InternalCSGModelManager.MeshGeneration;
+
+                        var brushTransformations = new Matrix4x4[brushes.Length];
+                        var brushNodeIDs = new Int32[brushes.Length];
+                        for (int i = brushes.Length - 1; i >= 0; i--) {
+                            var brush = brushes[i];
+                            if (brush.brushNodeID == CSGNode.InvalidNodeID || // could be a prefab
+                                brush.compareTransformation == null ||
+                                brush.ChildData == null ||
+                                !brush.ChildData.ModelTransform) {
+                                ArrayUtility.RemoveAt(ref brushTransformations, i);
+                                ArrayUtility.RemoveAt(ref brushNodeIDs, i);
+                                continue;
+                            }
+
+                            brushTransformations[i] = brush.compareTransformation.localToWorldMatrix;
+                            brushNodeIDs[i] = brush.brushNodeID;
+                        }
+
+                        CSGRenderer.DrawSelectedBrushes(zTestLineMeshManager, noZTestLineMeshManager, brushNodeIDs, brushTransformations, ColorSettings.SelectedOutlines, GUIConstants.lineScale);
+                    }
+
+                    MaterialUtility.LineAlphaMultiplier = 1.0f;
+                    MaterialUtility.LineDashMultiplier = 2.0f;
+                    MaterialUtility.LineThicknessMultiplier = 2.0f;
+                    noZTestLineMeshManager.Render(MaterialUtility.NoZTestGenericLine);
+                    MaterialUtility.LineDashMultiplier = 1.0f;
+                    MaterialUtility.LineThicknessMultiplier = 1.0f;
+                    zTestLineMeshManager.Render(MaterialUtility.ZTestGenericLine);
+
+                    if (!SceneDragToolManager.IsDraggingObjectInScene) {
+                        if (activeTransform == null) {
+                            Handles.matrix = oldMatrix;
+                            return;
+                        }
+
+                        if (activeSpaceMatrices == null)
+                            activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
+
+                        Color meshEdgeOutlineColor = ColorSettings.MeshEdgeOutline;
+                        Color boundOutlinesColor = ColorSettings.BoundsOutlines;
+
+                        if (!mouseIsDragging || (Tools.current != Tool.Rotate) || (hoverOnBoundsEdge == -1)) {
+                            PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale * 2.0f, meshEdgeOutlineColor);
+                            PaintUtility.DrawUnoccludedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, meshEdgeOutlineColor);
+                            PaintUtility.DrawDottedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, boundOutlinesColor, 4.0f);
+                            PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale, boundOutlinesColor);
+                        }
+
+                        if (!sceneView.camera.orthographic && CSGSettings.GridVisible) {
+                            Handles.matrix = Matrix4x4.identity;
+
+                            var indices = BoundsUtilities.AABBTopIndices;
+                            var vertices = new Vector3[indices.Length];
+
+                            float max = float.NegativeInfinity;
+                            if (!mouseIsDragging || (Tools.current != Tool.Rotate)) {
+                                for (int i = 0; i < indices.Length; i++) {
+                                    var pt0 = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalPoints[i]);
+                                    var pt1 = RealtimeCSG.CSGGrid.CurrentGridPlane.Project(pt0);
+                                    max = Mathf.Max(max, (pt0.y - pt1.y));
+                                    PaintUtility.DrawDottedLine(pt0, pt1, boundOutlinesColor, 4.0f);
+                                    vertices[i] = pt1;
+                                }
+                            }
+                            else {
+                                for (int i = 0; i < indices.Length; i++) {
+                                    var pt0 = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalPoints[i]);
+                                    var pt1 = RealtimeCSG.CSGGrid.CurrentGridPlane.Project(pt0);
+                                    max = Mathf.Max(max, (pt0.y - pt1.y));
+                                    vertices[i] = pt1;
+                                }
+                            }
+
+                            if (max > 0) {
+                                PaintUtility.DrawPolygon(vertices, ColorSettings.ShadowColor);
+                                PaintUtility.DrawDottedWirePolygon(vertices, ColorSettings.ShadowOutlineColor);
+                                PaintUtility.DrawWirePolygon(vertices, ColorSettings.ShadowOutlineColor);
+                            }
+                            else {
+                                //PaintUtility.DrawPolygon(vertices, ShapeDrawingFill);
+                                PaintUtility.DrawDottedWirePolygon(vertices, boundOutlinesColor);
+                                //PaintUtility.DrawWirePolygon(vertices, boundOutlinesColor);
+                            }
+                        }
+
+                        Handles.matrix = oldMatrix;
+
+                        if ( //hoverOnBoundsEdge == -1 &&
+                            (Tools.current == Tool.Scale || Tools.current == Tool.Rect) &&
+                            (toolEditMode == ToolEditMode.SizingBounds || toolEditMode == ToolEditMode.None) &&
+                            !cloneDragKeyPressed) {
+                            if ( //!RealtimeCSG.Grid.YMoveModeActive &&
+                                (hoverOnBoundsEdge != -1 ||
+                                 hoverOnBoundsCenter != -1 ||
+                                 !mouseIsDragging)) {
+                                if (hoverOnBoundsCenter != -1)
+                                    RenderArrowCap(hoverOnBoundsCenter);
+
+                                PaintUtility.DrawDoubleDots(camera, activeSpaceMatrices.activeLocalToWorld,
+                                    renderLocalCenterPoints,
+                                    renderLocalCenterPointSizes,
+                                    renderLocalCenterPointColors,
+                                    renderLocalCenterPoints.Length);
+
+                                PaintUtility.DrawDoubleDots(camera, activeSpaceMatrices.activeLocalToWorld,
+                                    renderLocalEdgePoints,
+                                    renderLocalEdgePointSizes,
+                                    renderLocalEdgePointColors,
+                                    renderLocalEdgePoints.Length);
+                            }
+
+                            if (camera != null) {
+                                bool showAxisX;
+                                bool showAxisY;
+                                bool showAxisZ;
+                                if (hoverOnBoundsEdge != -1) {
+                                    showAxisX = false;
+                                    showAxisY = false;
+                                    showAxisZ = false;
+                                    switch (BoundsUtilities.AABBEdgeAxis[hoverOnBoundsEdge][0]) {
+                                        case PrincipleAxis.X: showAxisX = true; break;
+                                        case PrincipleAxis.Y: showAxisY = true; break;
+                                        case PrincipleAxis.Z: showAxisZ = true; break;
+                                    }
+
+                                    switch (BoundsUtilities.AABBEdgeAxis[hoverOnBoundsEdge][1]) {
+                                        case PrincipleAxis.X: showAxisX = true; break;
+                                        case PrincipleAxis.Y: showAxisY = true; break;
+                                        case PrincipleAxis.Z: showAxisZ = true; break;
+                                    }
+                                }
+                                else if (hoverOnBoundsCenter != -1) {
+                                    showAxisX = false;
+                                    showAxisY = false;
+                                    showAxisZ = false;
+                                    switch (BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter]) {
+                                        case PrincipleAxis.X: showAxisX = true; break;
+                                        case PrincipleAxis.Y: showAxisY = true; break;
+                                        case PrincipleAxis.Z: showAxisZ = true; break;
+                                    }
+                                }
+                                else {
+                                    showAxisX = true;
+                                    showAxisY = true;
+                                    showAxisZ = true;
+                                }
+
+                                PaintUtility.RenderBoundsSizes(activeSpaceMatrices.activeWorldToLocal, activeSpaceMatrices.activeLocalToWorld,
+                                    camera, targetLocalPoints,
+                                    RealtimeCSG.CSGSettings.LockAxisX ? Color.red : Color.white,
+                                    RealtimeCSG.CSGSettings.LockAxisY ? Color.red : Color.white,
+                                    RealtimeCSG.CSGSettings.LockAxisZ ? Color.red : Color.white,
+                                    showAxisX, showAxisY, showAxisZ);
+                            }
+                        }
+                        else if (Tools.current == Tool.Rotate) {
+                            if (hoverOnBoundsEdge != -1) {
+                                if (inCamera && !mouseIsDragging) {
+                                    UpdateRotationCircle(sceneView, activeSpaceMatrices.activeLocalToWorld, realMousePosition);
+                                }
+
+                                if (!mouseIsDragging)
+                                    RenderHighlightedEdge(hoverOnBoundsEdge);
+                                RenderRotationCircle(camera);
+                            }
+                        }
+                    }
+                }
+
+                if (Selection.activeTransform != null) {
+                    if (Tools.current == Tool.Rotate) {
+                        if (worldSpacePivotCenterSet && HaveBrushSelection) {
+                            Vector3 newPivot = worldSpacePivotCenter;
+                            EditorGUI.BeginChangeCheck();
+                            {
+                                var rotation = Tools.handleRotation;
+                                newPivot = PaintUtility.HandlePivot(camera, newPivot, rotation,
+                                    ColorSettings.BoundsEdgeHover, Tools.pivotMode == PivotMode.Pivot);
+                            }
+                            if (EditorGUI.EndChangeCheck()) {
+                                ignorePivotChange = true;
+                                SetPivotCenter(newPivot);
+                            }
+
+                            worldSpacePivotCenterSet = true;
+                        }
+                    }
+                    else if (Tools.current == Tool.Move) {
+                        if (HaveSelection) {
+                            Vector3 newPosition = boundsCenter;
+                            RealtimeCSG.Helpers.CSGHandles.InitFunction init = delegate {
+                                originalPoint = newPosition;
+                                UpdateTargetInfo();
+                                snapVertices = originalLocalTargetBounds.GetAllCorners();
+                                for (int i = 0; i < snapVertices.Length; i++)
+                                    snapVertices[i] = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(snapVertices[i]);
+                            };
+                            RealtimeCSG.Helpers.CSGHandles.InitFunction shutdown = delegate { UpdateTargetInfo(); };
+                            EditorGUI.BeginChangeCheck();
+                            {
+                                var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
+                                newPosition = RealtimeCSG.Helpers.CSGHandles.PositionHandle(camera, newPosition,
+                                    Tools.handleRotation, activeSnappingMode, snapVertices: snapVertices, initFunction: init, shutdownFunction: shutdown);
+                            }
+                            if (EditorGUI.EndChangeCheck()) {
+                                MoveCenter(originalPoint, newPosition);
+                                UpdateTargetBounds();
+                                UpdateTargetBoundsHandles(camera);
+                            }
+                        }
+                        else
+                            snapVertices = null;
+                    }
+                }
+
+                switch (Event.current.type) {
+                    case EventType.ValidateCommand: {
+                        if (Keys.CloneDragActivate.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.HandleSceneValidate(EditModeManager.CurrentTool, false)) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionX.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionY.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionZ.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionLeft.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionRight.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionLeft.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionRight.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionBack.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionForward.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionDown.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionUp.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.CenterPivot.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        break;
+                    }
+
+                    case EventType.KeyDown: {
+                        SceneQueryUtility.ClearDeepClick();
+                        if (Tools.viewTool != ViewTool.FPS && Keys.CloneDragActivate.IsKeyPressed()) {
+                            cloneDragKeyPressed = true;
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.HandleSceneKeyDown(EditModeManager.CurrentTool, false)) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionX.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionY.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionZ.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionLeft.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionRight.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionLeft.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionRight.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionBack.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionForward.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionDown.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionUp.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.CenterPivot.IsKeyPressed()) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        break;
+                    }
+
+                    case EventType.KeyUp: {
+                        if (cloneDragKeyPressed && Keys.CloneDragActivate.IsKeyPressed()) {
+                            cloneDragKeyPressed = false;
+                            haveCloned = false;
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.HandleSceneKeyUp(EditModeManager.CurrentTool, false)) {
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionX.IsKeyPressed()) {
+                            FlipX();
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionY.IsKeyPressed()) {
+                            FlipY();
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.FlipSelectionZ.IsKeyPressed()) {
+                            FlipZ();
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionLeft.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            var center = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalBounds.Center);
+                            RotateObjects(topTransforms, center, MathConstants.upVector3, RealtimeCSG.CSGSettings.SnapRotation);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.RotateSelectionRight.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            var center = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalBounds.Center);
+                            RotateObjects(topTransforms, center, MathConstants.upVector3, -RealtimeCSG.CSGSettings.SnapRotation);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionLeft.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.rightVector3 * RealtimeCSG.CSGSettings.SnapVector.x);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionRight.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.leftVector3 * RealtimeCSG.CSGSettings.SnapVector.x);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionBack.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.forwardVector3 * RealtimeCSG.CSGSettings.SnapVector.z);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionForward.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.backVector3 * RealtimeCSG.CSGSettings.SnapVector.z);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionDown.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.downVector3 * RealtimeCSG.CSGSettings.SnapVector.y);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.MoveSelectionUp.IsKeyPressed()) {
+                            UpdateTargetInfo();
+                            MoveObjects(topTransforms, MathConstants.upVector3 * RealtimeCSG.CSGSettings.SnapVector.y);
+                            Event.current.Use();
+                            break;
+                        }
+
+                        if (Keys.CenterPivot.IsKeyPressed()) {
+                            RecenterPivot();
+                            break;
+                        }
+
+                        break;
+                    }
+
+                    case EventType.MouseDown: {
+                        if (!sceneRect.Contains(Event.current.mousePosition)) {
+                            break;
+                        }
+                        
+                        //mouseWasDownNot0 = Event.current.button != 0;
+                        //mouseIsDownNot0  = (Event.current.button != 0);
+                        if (GUIUtility.hotControl != 0 || Event.current.button != 0) {
+                            toolEditMode = ToolEditMode.None;
+                            GUIUtility.hotControl = 0;
+                            GUIUtility.keyboardControl = 0;
+                            EditorGUIUtility.editingTextField = false;
+                            break;
+                        }
+                        
+                        extraDeltaMovement = MathConstants.zeroVector3;
+                        activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
+
+                        if (RealtimeCSG.CSGSettings.LockAxisX &&
+                            RealtimeCSG.CSGSettings.LockAxisY &&
+                            RealtimeCSG.CSGSettings.LockAxisZ) {
+                            EditModeManager.ShowMessage("All axi are disabled (X Y Z), cannot move.");
+                            break;
+                        }
+
+                        if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3) {
+                            EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
+                            break;
+                        }
+
+                        UpdateTargetInfo();
+                        if (HaveTarget &&
+                            (Tools.current == Tool.Rotate ||
+                             Tools.current == Tool.Scale ||
+                             Tools.current == Tool.Rect ||
+                             Tools.current == Tool.Move)) // && Event.current.modifiers == EventModifiers.None)
+                        {
+                            int newControlID = -1;
+                            if (hoverOnTarget != -1) {
+                                if (Event.current.modifiers == EventModifiers.None ||
+                                    Event.current.modifiers == EventModifiers.Shift ||
+                                    Event.current.modifiers == EventModifiers.Control ||
+                                    Event.current.modifiers == (EventModifiers.Shift | EventModifiers.Control)) {
+                                    toolEditMode = ToolEditMode.MovingObject;
+                                    newControlID = brushControlIDs[hoverOnTarget];
+                                }
+                            }
+                            else if (Tools.current != Tool.Move) {
+                                if (hoverOnBoundsCenter != -1) {
+                                    if (Event.current.modifiers == EventModifiers.None) {
+                                        toolEditMode = ToolEditMode.SizingBounds;
+                                        newControlID = targetBoundCenterIDs[hoverOnBoundsCenter];
+                                    }
+                                }
+                                else if (hoverOnBoundsEdge != -1) {
+                                    if (Event.current.modifiers == EventModifiers.None) {
+                                        toolEditMode = ToolEditMode.RotatingBounds;
+                                        newControlID = targetBoundEdgeIDs[hoverOnBoundsEdge];
+                                        rotateCurrentSnappedAngle = rotateStartAngle;
+                                    }
+                                }
+                            }
+
+                            if (newControlID != -1) {
+                                GUIUtility.hotControl = newControlID;
+                                GUIUtility.keyboardControl = newControlID;
+                                EditorGUIUtility.editingTextField = false;
+                                Event.current.Use();
+                                firstMove = true;
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
+
+                    case EventType.MouseUp: {
+                        if (Event.current.button != 0)
+                            break;
+                        if (!mouseIsDragging) // && GUIUtility.hotControl == 0)
+                        {
+                            // this crudely solves a state mismatch with dragging intents.
+                            // this isn't an actual fix, it's a bandaid.
+                            // But this is a lot of ode to take in and I want my peace and quiet right now.
+                            toolEditMode = ToolEditMode.None;
+                            Debug.Log("Got one. Setting");
+                            GUIUtility.hotControl = 0;
+                            GUIUtility.keyboardControl = 0;
+                            EditorGUIUtility.editingTextField = false;
+                            SelectionUtility.DoSelectionClick(sceneView);
+                            // We're doing manual selection, make sure to eat the event otherwise unity will run its own MouseUp for selection logic
+                            Event.current.Use();
+                        }
+
+                        mouseIsDragging = false;
+                        break;
+                    }
+
+                    case EventType.Layout: {
+                        UpdateMouseCursor();
+                        try {
+                            if (inCamera && !mouseIsDragging &&
+                                GUIUtility.hotControl == 0) {
+                                //var forward = camera.transform.forward.normalized;
+                                //var view_is_2D = camera.orthographic && 
+                                //				 (
+                                //					(Mathf.Abs(forward.x) >= 1.0f - MathConstants.EqualityEpsilon) || 
+                                //					(Mathf.Abs(forward.y) >= 1.0f - MathConstants.EqualityEpsilon) || 
+                                //					(Mathf.Abs(forward.z) >= 1.0f - MathConstants.EqualityEpsilon)
+                                //				 );
+
+                                UpdateTargetBoundsHandles(camera);
+
+                                activeTransform = Selection.activeTransform;
+                                if (activeTransform != null) {
+                                    activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
+
+                                    hoverOnTarget = -1;
+                                    hoverOnBoundsCenter = -1;
+                                    hoverOnBoundsEdge = -1;
+
+                                    var world_ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                                    var ray_start = world_ray.origin;
+                                    var ray_vector = (world_ray.direction * (camera.farClipPlane - camera.nearClipPlane));
+                                    var ray_end = ray_start + ray_vector;
+
+                                    float min_distance = float.PositiveInfinity;
+                                    int closest_brush = -1;
+                                    for (int t = 0; t < brushes.Length; t++) {
+                                        var brush = brushes[t];
+                                        var model_transform = parentModelTransforms[t];
+                                        if (model_transform == null)
+                                            continue;
+
+                                        var modelTransformation = model_transform.localToWorldMatrix;
+
+                                        LegacyBrushIntersection intersection;
+                                        if (SceneQueryUtility.FindBrushIntersection(brush, modelTransformation, ray_start, ray_end, out intersection)) {
+                                            var distance = (intersection.worldIntersection - ray_start).magnitude;
+                                            if (distance < min_distance) {
+                                                min_distance = distance;
+                                                closest_brush = t;
+                                                hoverOverBrushIndex = t;
+                                                hoverIntersectionPoint = intersection.worldIntersection;
+                                            }
+                                        }
+                                    }
+
+
+                                    if (closest_brush == -1 && brushes.Length > 0) {
+                                        var worldToLocal = activeSpaceMatrices.activeWorldToLocal;
+                                        Bounds bounds = new Bounds();
+                                        bounds.center = targetLocalBounds.Center;
+                                        bounds.size = targetLocalBounds.Size;
+
+                                        if (bounds.size.x != 0 &&
+                                            bounds.size.y != 0 &&
+                                            bounds.size.z != 0 &&
+                                            !float.IsNaN(bounds.size.x) &&
+                                            !float.IsNaN(bounds.size.y) &&
+                                            !float.IsNaN(bounds.size.z) &&
+                                            !float.IsInfinity(bounds.size.x) &&
+                                            !float.IsInfinity(bounds.size.y) &&
+                                            !float.IsInfinity(bounds.size.z)) {
+                                            var local_ray = world_ray;
+                                            local_ray.direction = worldToLocal.MultiplyVector(local_ray.direction);
+                                            local_ray.origin = worldToLocal.MultiplyPoint(local_ray.origin);
+
+                                            if (bounds.IntersectRay(local_ray)) {
+                                                closest_brush = 0;
+                                            }
+                                        }
+                                    }
+
+                                    if (closest_brush >= 0 && closest_brush <= brushes.Length) {
+                                        HandleUtility.AddControl(brushControlIDs[closest_brush], 3.0f);
+                                    }
+
+
+
+                                    MouseCursor newCursor = MouseCursor.Arrow;
+                                    bool foundControl = false;
+                                    int nearestControl = -1;
 
                                     //if (!camera.orthographic)
                                     {
                                         var matrix = activeSpaceMatrices.activeLocalToWorld;
 
-										if (//!RealtimeCSG.Grid.YMoveModeActive &&
-											(Tools.current == Tool.Scale || 
-											 Tools.current == Tool.Rect) &&
-											!cloneDragKeyPressed)
-										{
-											for (int t = 0; t < targetBoundCenterIDs.Length; t++)
-											{
-												float radius = renderLocalCenterPointSizes[t] * GUIConstants.hoverHandleScale;
-												if (radius == 0)
-													continue;
-												float distance = HandleUtility.DistanceToCircle(matrix.MultiplyPoint(targetLocalCenterPoints[t]), radius) * 0.5f;
-												HandleUtility.AddControl(targetBoundCenterIDs[t], distance);
-											}
+                                        if ( //!RealtimeCSG.Grid.YMoveModeActive &&
+                                            (Tools.current == Tool.Scale ||
+                                             Tools.current == Tool.Rect) &&
+                                            !cloneDragKeyPressed) {
+                                            for (int t = 0; t < targetBoundCenterIDs.Length; t++) {
+                                                float radius = renderLocalCenterPointSizes[t] * GUIConstants.hoverHandleScale;
+                                                if (radius == 0)
+                                                    continue;
+                                                float distance = HandleUtility.DistanceToCircle(matrix.MultiplyPoint(targetLocalCenterPoints[t]), radius) * 0.5f;
+                                                HandleUtility.AddControl(targetBoundCenterIDs[t], distance);
+                                            }
 
-											nearestControl = HandleUtility.nearestControl;
-											if (nearestControl > 0)
-											{
-												for (int t = 0; t < targetBoundCenterIDs.Length; t++)
-												{
-													if (targetBoundCenterIDs[t] == nearestControl)
-													{
-														hoverIntersectionPoint = matrix.MultiplyPoint(targetLocalCenterPoints[t]);
+                                            nearestControl = HandleUtility.nearestControl;
+                                            if (nearestControl > 0) {
+                                                for (int t = 0; t < targetBoundCenterIDs.Length; t++) {
+                                                    if (targetBoundCenterIDs[t] == nearestControl) {
+                                                        hoverIntersectionPoint = matrix.MultiplyPoint(targetLocalCenterPoints[t]);
 
-														hoverOnBoundsCenter = t;
-														newCursor = CursorUtility.GetCursorForDirection(Matrix4x4.identity, targetLocalCenterPoints[t], targetLocalDirections[t]);
-														foundControl = true;
-														break;
-													}
-												}
-											}
-										}
+                                                        hoverOnBoundsCenter = t;
+                                                        newCursor = CursorUtility.GetCursorForDirection(Matrix4x4.identity, targetLocalCenterPoints[t], targetLocalDirections[t]);
+                                                        foundControl = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
 
-										if (Tools.current == Tool.Scale || Tools.current == Tool.Rect || Tools.current == Tool.Rotate)
-										{
-											if (camera != null && !foundControl && !cloneDragKeyPressed)
-											{
-												var cameraPlane = CSG_HandleUtility.GetNearPlane(camera);
+                                        if (Tools.current == Tool.Scale || Tools.current == Tool.Rect || Tools.current == Tool.Rotate) {
+                                            if (camera != null && !foundControl && !cloneDragKeyPressed) {
+                                                var cameraPlane = CSG_HandleUtility.GetNearPlane(camera);
 
 
-												/*
-												 * TODO:
-												 * 1. determine on which polygon we're on
-												 * 2. determine which edge we're close too
-												 * 3. determine the opposite direction on the polygon
-												 * 4. create new second point that goes in that direction in the length of the bounding box
-												 * 5. determine the size between the 2 points as WorldToGUIPoint
-												 * 6. divide by 3, this is your maximum distance to the line
-												*/
-												var mousePoint = Event.current.mousePosition;
+                                                /*
+                                                 * TODO:
+                                                 * 1. determine on which polygon we're on
+                                                 * 2. determine which edge we're close too
+                                                 * 3. determine the opposite direction on the polygon
+                                                 * 4. create new second point that goes in that direction in the length of the bounding box
+                                                 * 5. determine the size between the 2 points as WorldToGUIPoint
+                                                 * 6. divide by 3, this is your maximum distance to the line
+                                                 */
+                                                var mousePoint = Event.current.mousePosition;
 
-												for (int t = 0; t < targetBoundEdgeIDs.Length; t++)
-												{
-													var side1 = backfaced[BoundsUtilities.AABBEdgeSides[t][0]];
-													var side2 = backfaced[BoundsUtilities.AABBEdgeSides[t][1]];
-													if (Tools.current == Tool.Rotate &&
-														(side1 && side2))
-														continue;
+                                                for (int t = 0; t < targetBoundEdgeIDs.Length; t++) {
+                                                    var side1 = backfaced[BoundsUtilities.AABBEdgeSides[t][0]];
+                                                    var side2 = backfaced[BoundsUtilities.AABBEdgeSides[t][1]];
+                                                    if (Tools.current == Tool.Rotate &&
+                                                        (side1 && side2))
+                                                        continue;
 
-													var point1 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][0]];
-													var point2 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][1]];
+                                                    var point1 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][0]];
+                                                    var point2 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][1]];
 
-													float distance;
-													if (Tools.current == Tool.Scale ||
-														Tools.current == Tool.Rect)
-													{
-														if (renderLocalEdgePointSizes[t] > 0 && !camera.orthographic)
-														{
-															distance = HandleUtility.DistanceToCircle(matrix.MultiplyPoint(renderLocalEdgePoints[t]), renderLocalEdgePointSizes[t]) * 0.5f;
-															HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
-														} else
-														{
-															distance = Mathf.Min(
-																			CameraUtility.DistanceToLine(cameraPlane, mousePoint, point1, point2) * 3.0f,
-																			HandleUtility.DistanceToCircle(matrix.MultiplyPoint(renderLocalEdgePoints[t]), renderLocalEdgePointSizes[t]) * 0.5f);
-															HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
-														}
-													} else
-													{
-														distance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, matrix.MultiplyPoint(point1), matrix.MultiplyPoint(point2));
-														HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
-													}
-												}
-											}
-										}
+                                                    float distance;
+                                                    if (Tools.current == Tool.Scale ||
+                                                        Tools.current == Tool.Rect) {
+                                                        if (renderLocalEdgePointSizes[t] > 0 && !camera.orthographic) {
+                                                            distance = HandleUtility.DistanceToCircle(matrix.MultiplyPoint(renderLocalEdgePoints[t]), renderLocalEdgePointSizes[t]) * 0.5f;
+                                                            HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
+                                                        }
+                                                        else {
+                                                            distance = Mathf.Min(
+                                                                CameraUtility.DistanceToLine(cameraPlane, mousePoint, point1, point2) * 3.0f,
+                                                                HandleUtility.DistanceToCircle(matrix.MultiplyPoint(renderLocalEdgePoints[t]), renderLocalEdgePointSizes[t]) * 0.5f);
+                                                            HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
+                                                        }
+                                                    }
+                                                    else {
+                                                        distance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, matrix.MultiplyPoint(point1), matrix.MultiplyPoint(point2));
+                                                        HandleUtility.AddControl(targetBoundEdgeIDs[t], distance);
+                                                    }
+                                                }
+                                            }
+                                        }
 
-										nearestControl = HandleUtility.nearestControl;
-										RealtimeCSG.CSGGrid.ForceGrid = false;
+                                        nearestControl = HandleUtility.nearestControl;
+                                        RealtimeCSG.CSGGrid.ForceGrid = false;
 
-										if (nearestControl > 0 && !foundControl)
-										{
-											//if (Tools.current == Tool.Rotate ||
-											//	view_is_2D)
-											if (//!RealtimeCSG.Grid.YMoveModeActive &&
-												(Tools.current == Tool.Scale || Tools.current == Tool.Rect || Tools.current == Tool.View || Tools.current == Tool.Rotate))
-											{
-												for (int t = 0; t < targetBoundEdgeIDs.Length; t++)
-												{
-													if (targetBoundEdgeIDs[t] == nearestControl)
-													{
-														var point1 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][0]];
-														var point2 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][1]];
-														hoverIntersectionPoint = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint((point1 + point2) * 0.5f);
+                                        if (nearestControl > 0 && !foundControl) {
+                                            //if (Tools.current == Tool.Rotate ||
+                                            //	view_is_2D)
+                                            if ( //!RealtimeCSG.Grid.YMoveModeActive &&
+                                                (Tools.current == Tool.Scale || Tools.current == Tool.Rect || Tools.current == Tool.View || Tools.current == Tool.Rotate)) {
+                                                for (int t = 0; t < targetBoundEdgeIDs.Length; t++) {
+                                                    if (targetBoundEdgeIDs[t] == nearestControl) {
+                                                        var point1 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][0]];
+                                                        var point2 = targetLocalPoints[BoundsUtilities.AABBEdgeIndices[t][1]];
+                                                        hoverIntersectionPoint = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint((point1 + point2) * 0.5f);
 
-														if (Tools.current == Tool.Rotate || 
-															renderLocalEdgePointSizes[t] > 0)
-														{
-															hoverOnBoundsEdge = t;
+                                                        if (Tools.current == Tool.Rotate ||
+                                                            renderLocalEdgePointSizes[t] > 0) {
+                                                            hoverOnBoundsEdge = t;
 
-															var side1 = BoundsUtilities.AABBEdgeSides[t][0];
-															var side2 = BoundsUtilities.AABBEdgeSides[t][1];
-															var localSideDir1 = targetLocalDirections[side1];
-															var localSideDir2 = targetLocalDirections[side2];
-															var localNormal = Vector3.Cross(localSideDir1, localSideDir2);
+                                                            var side1 = BoundsUtilities.AABBEdgeSides[t][0];
+                                                            var side2 = BoundsUtilities.AABBEdgeSides[t][1];
+                                                            var localSideDir1 = targetLocalDirections[side1];
+                                                            var localSideDir2 = targetLocalDirections[side2];
+                                                            var localNormal = Vector3.Cross(localSideDir1, localSideDir2);
 
-															movePlane = new CSGPlane(GridUtility.CleanNormal(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(localNormal)),
-																					 activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(hoverIntersectionPoint));
-															if (Tools.current == Tool.Scale ||
-																Tools.current == Tool.Rect)
-																RealtimeCSG.CSGGrid.SetForcedGrid(camera, movePlane);
+                                                            movePlane = new CSGPlane(GridUtility.CleanNormal(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(localNormal)),
+                                                                activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(hoverIntersectionPoint));
+                                                            if (Tools.current == Tool.Scale ||
+                                                                Tools.current == Tool.Rect)
+                                                                RealtimeCSG.CSGGrid.SetForcedGrid(camera, movePlane);
 
-															if (Tools.current == Tool.Rotate)
-																newCursor = MouseCursor.RotateArrow;/*
-															else
-																newCursor = CursorUtility.GetCursorForDirection(activeSpaceMatrices.activeLocalToWorld, 
-																								targetLocalCenterPoints[side], targetLocalDirections[side]);*/
-															foundControl = true;
-														} else
-														{
-															for (int i = 0; i < 2; i++)
-															{
-																var side = BoundsUtilities.AABBEdgeSides[t][i];
-																if (renderLocalCenterPointSizes[side] == 0)
-																	continue;
-																float radius = renderLocalCenterPointSizes[side] * GUIConstants.hoverHandleScale;
-																if (radius != 0)
-																{
-																	hoverOnBoundsCenter = side;
-																	foundControl = true;
-																	newCursor = CursorUtility.GetCursorForDirection(Matrix4x4.identity, targetLocalCenterPoints[side], targetLocalDirections[side]);
-																	break;
-																}
-															}
-														}
-														break;
-													}
-												}
-											}
+                                                            if (Tools.current == Tool.Rotate)
+                                                                newCursor = MouseCursor.RotateArrow; /*
+                                                            else
+                                                                newCursor = CursorUtility.GetCursorForDirection(activeSpaceMatrices.activeLocalToWorld,
+                                                                                                targetLocalCenterPoints[side], targetLocalDirections[side]);*/
+                                                            foundControl = true;
+                                                        }
+                                                        else {
+                                                            for (int i = 0; i < 2; i++) {
+                                                                var side = BoundsUtilities.AABBEdgeSides[t][i];
+                                                                if (renderLocalCenterPointSizes[side] == 0)
+                                                                    continue;
+                                                                float radius = renderLocalCenterPointSizes[side] * GUIConstants.hoverHandleScale;
+                                                                if (radius != 0) {
+                                                                    hoverOnBoundsCenter = side;
+                                                                    foundControl = true;
+                                                                    newCursor = CursorUtility.GetCursorForDirection(Matrix4x4.identity, targetLocalCenterPoints[side], targetLocalDirections[side]);
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
 
-											if (Tools.current == Tool.Scale ||
-												Tools.current == Tool.Rect || 
-												Tools.current == Tool.Move)
-											{
-												for (int t = 0; t < brushes.Length; t++)
-												{
-													if (brushControlIDs[t] == nearestControl)
-													{
-														hoverOnTarget = t;
-														newCursor = MouseCursor.MoveArrow;
-														foundControl = true;
-														break;
-													}
-												}
-											}
-										}
-									}
+                                                        break;
+                                                    }
+                                                }
+                                            }
 
-									if (newCursor != currentCursor)
-									{
-										currentCursor = newCursor;
-										CSG_EditorGUIUtility.RepaintAll();
-									}
-								}
-							}
-						}
-						catch
-						{
-							throw;
-						}
-						break;
-					}
-				}
+                                            if (Tools.current == Tool.Scale ||
+                                                Tools.current == Tool.Rect ||
+                                                Tools.current == Tool.Move) {
+                                                for (int t = 0; t < brushes.Length; t++) {
+                                                    if (brushControlIDs[t] == nearestControl) {
+                                                        hoverOnTarget = t;
+                                                        newCursor = MouseCursor.MoveArrow;
+                                                        foundControl = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
 
-				var currentHotControl = GUIUtility.hotControl;
-			
-				for (int i = 0; i < targetBoundCenterIDs.Length; i++)
-				{
-					var targetBoundCenterID = targetBoundCenterIDs[i];
-					if (currentHotControl != targetBoundCenterID)
-						continue;
-					var type = Event.current.GetTypeForControl(targetBoundCenterID);
-					switch (type)
-					{
-						case EventType.MouseDrag:
-						{
-							if (Event.current.button != 0)
-								break;
+                                    if (newCursor != currentCursor) {
+                                        currentCursor = newCursor;
+                                        CSG_EditorGUIUtility.RepaintAll();
+                                    }
+                                }
+                            }
+                        }
+                        catch {
+                            throw;
+                        }
 
-							if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3)
-							{
-								EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
-								break;
-							}
-							EditModeManager.ResetMessage();
-												
-							if (firstMove)
-							{
-								EditorGUIUtility.SetWantsMouseJumping(1);
-								extraDeltaMovement = MathConstants.zeroVector3;
-								originalPoint = hoverIntersectionPoint;
-								startCamera = camera;
-								UpdateGrid(startCamera);
-							}
+                        break;
+                    }
+                }
 
-							var mouseRay		= HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-							
-							var worldIntersection = movePlane.RayIntersection(mouseRay);
-							if (float.IsNaN(worldIntersection.x) || float.IsNaN(worldIntersection.y) || float.IsNaN(worldIntersection.z))
-								break;
+                var currentHotControl = GUIUtility.hotControl;
 
-							var localLineOrg		= originalLocalCenterPoints[i];
-							var localLineDir		= targetLocalDirections[i];
-							var localIntersection	= activeSpaceMatrices.activeWorldToLocal.MultiplyPoint(worldIntersection);
-							worldIntersection = GridUtility.CleanPosition(worldIntersection);
-							worldIntersection = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(GeometryUtility.ProjectPointOnInfiniteLine(localIntersection, localLineOrg, localLineDir));
+                for (int i = 0; i < targetBoundCenterIDs.Length; i++) {
+                    var targetBoundCenterID = targetBoundCenterIDs[i];
+                    if (currentHotControl != targetBoundCenterID)
+                        continue;
+                    var type = Event.current.GetTypeForControl(targetBoundCenterID);
+                    switch (type) {
+                        case EventType.MouseDrag: {
+                            if (Event.current.button != 0)
+                                break;
 
-							if (firstMove)
-							{
-								originalPoint = worldIntersection;
-								worldDeltaMovement = MathConstants.zeroVector3;
-								firstMove = false;
-							} else
-								worldDeltaMovement = SnapMovementToPlane(worldIntersection - originalPoint);
-							
-							if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
-								break;
+                            if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3) {
+                                EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
+                                break;
+                            }
 
-							var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
-							MoveBoundsCenter(camera, i, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode);
-							break;
-						}
-						case EventType.MouseUp:
-						{
-							if (Event.current.button != 0)
-								break;
-							
-							EditorGUIUtility.SetWantsMouseJumping(0);
-							startCamera = null;
-							toolEditMode = ToolEditMode.None;
-						
-							UpdateTargetInfo();
-						
-							GUIUtility.hotControl = 0;
-							GUIUtility.keyboardControl = 0;
-							EditorGUIUtility.editingTextField = false;
-							Event.current.Use();
+                            EditModeManager.ResetMessage();
 
-							RealtimeCSG.CSGGrid.ForceGrid = false;
-							CSG_EditorGUIUtility.RepaintAll();					
-							break;
-						}
-						case EventType.Repaint:
-						{
-							if (!inCamera)
-								break;
-							var textCenter2D = Event.current.mousePosition;
-							textCenter2D.y += hover_text_distance * 2;
-							Vector3 delta = worldDeltaMovement;
-							if (Tools.pivotRotation == PivotRotation.Local)
-							{
-								delta = GridUtility.CleanPosition(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(delta));
-							}
-							var length = delta.magnitude;
+                            if (firstMove) {
+                                EditorGUIUtility.SetWantsMouseJumping(1);
+                                extraDeltaMovement = MathConstants.zeroVector3;
+                                originalPoint = hoverIntersectionPoint;
+                                startCamera = camera;
+                                UpdateGrid(startCamera);
+                            }
 
-							bool disabled = false;
-							if (hoverOnBoundsCenter != -1)
-							{
-								switch (BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter])
-								{
-									case PrincipleAxis.X: disabled = RealtimeCSG.CSGSettings.LockAxisX; break;
-									case PrincipleAxis.Y: disabled = RealtimeCSG.CSGSettings.LockAxisY; break;
-									case PrincipleAxis.Z: disabled = RealtimeCSG.CSGSettings.LockAxisZ; break;
-								}
-							}
+                            var mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
 
-							if (disabled)
-							{
-								switch (BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter])
-								{
-									case PrincipleAxis.X: PaintUtility.DrawScreenText(textCenter2D, "X axis is locked", CSG_GUIStyleUtility.redTextArea); break;
-									case PrincipleAxis.Y: PaintUtility.DrawScreenText(textCenter2D, "Y axis is locked", CSG_GUIStyleUtility.redTextArea); break;
-									case PrincipleAxis.Z: PaintUtility.DrawScreenText(textCenter2D, "Z axis is locked", CSG_GUIStyleUtility.redTextArea); break;
-								}
-								
-							} else
-							{ 
-								PaintUtility.DrawScreenText(textCenter2D, 
-									"Δ" + Units.ToRoundedDistanceString(length));
-							}
-							break;
-						}
-					}
-				}
-			
-				for (int i = 0; i < brushControlIDs.Length; i++)
-				{
-					var brushControlID	= brushControlIDs[i];
-					if (currentHotControl != brushControlID)
-						continue;
-					var type = Event.current.GetTypeForControl(brushControlID);
-					switch (type)
-					{
-						case EventType.MouseDrag:
-						{
-							if (Event.current.button != 0)
-								break;
+                            var worldIntersection = movePlane.RayIntersection(mouseRay);
+                            if (float.IsNaN(worldIntersection.x) || float.IsNaN(worldIntersection.y) || float.IsNaN(worldIntersection.z))
+                                break;
 
-							if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3)
-							{
-								EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
-								break;
-							}
-							EditModeManager.ResetMessage();
+                            var localLineOrg = originalLocalCenterPoints[i];
+                            var localLineDir = targetLocalDirections[i];
+                            var localIntersection = activeSpaceMatrices.activeWorldToLocal.MultiplyPoint(worldIntersection);
+                            worldIntersection = GridUtility.CleanPosition(worldIntersection);
+                            worldIntersection = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(GeometryUtility.ProjectPointOnInfiniteLine(localIntersection, localLineOrg, localLineDir));
 
-							if (firstMove)
-							{
-								EditorGUIUtility.SetWantsMouseJumping(1);
-								extraDeltaMovement = MathConstants.zeroVector3;
-								originalPoint = hoverIntersectionPoint;
-								startCamera = camera;
-								UpdateGrid(startCamera);
-								
-								for (var b = 0; b < topTransforms.Length; b++)
-								{
-									if (!topTransforms[b])
-										continue;
-									var gameObject = topTransforms[b].gameObject;
-									if (gameObject.activeInHierarchy &&
-										!CSGPrefabUtility.IsPrefabAsset(gameObject))
-									{
-										dragGameObjects.Add(gameObject);
-									}
-								}
-								
-								sourceSurfaceAlignment		= PrefabSourceAlignment.AlignedFront;
-								destinationSurfaceAlignment = PrefabDestinationAlignment.AlignToSurface;
-								if (activeTransform != null)
-								{
-									var topNode = activeTransform.GetComponentInChildren<CSGNode>();
-									if (topNode)
-									{
-										sourceSurfaceAlignment		= topNode.PrefabSourceAlignment;
-										destinationSurfaceAlignment = topNode.PrefabDestinationAlignment;
-									}
-								}
-								
-								BoundsUtilities.GetBoundsCornerPoints(targetLocalBounds, projectedBounds);
-							}
+                            if (firstMove) {
+                                originalPoint = worldIntersection;
+                                worldDeltaMovement = MathConstants.zeroVector3;
+                                firstMove = false;
+                            }
+                            else
+                                worldDeltaMovement = SnapMovementToPlane(worldIntersection - originalPoint);
 
-							var mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-							var worldIntersection = movePlane.RayIntersection(mouseRay);
-							if (!float.IsNaN(worldIntersection.x) && !float.IsNaN(worldIntersection.y) && !float.IsNaN(worldIntersection.z))
-							{
-								if (((prevModifiers & EventModifiers.Shift) != (SelectionUtility.CurrentModifiers & EventModifiers.Shift) 
-										//|| prevYMode != RealtimeCSG.Grid.YMoveModeActive
-									) &&
-									RealtimeCSG.CSGGrid.ForceGrid && startCamera != null)
-								{
-									prevModifiers = SelectionUtility.CurrentModifiers;
-									//prevYMode = RealtimeCSG.Grid.YMoveModeActive;
-									UpdateGridOrientation(realMousePosition);
-									extraDeltaMovement += worldDeltaMovement;
-								}
+                            if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
+                                break;
 
-								worldIntersection = GeometryUtility.ProjectPointOnPlane(movePlane, worldIntersection);
-								if (firstMove)
-								{
-									originalPoint = worldIntersection;
-									worldDeltaMovement = MathConstants.zeroVector3;
-									firstMove = false;
-								} else
-									worldDeltaMovement = //SnapMovementToPlane
-															(worldIntersection - originalPoint);
-							}
+                            var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
+                            MoveBoundsCenter(camera, i, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode);
+                            break;
+                        }
+                        case EventType.MouseUp: {
+                            if (Event.current.button != 0)
+                                break;
 
-							if (worldDeltaMovement != MathConstants.zeroVector3 &&
-								cloneDragKeyPressed &&
-								toolEditMode == ToolEditMode.MovingObject &&
-								!float.IsNaN(worldDeltaMovement.x) &&
-								!float.IsNaN(worldDeltaMovement.y) &&
-								!float.IsNaN(worldDeltaMovement.z))
-							{
-								toolEditMode = ToolEditMode.CloneDragging;
-								topTransforms = EditModeManager.CloneTargets();
+                            EditorGUIUtility.SetWantsMouseJumping(0);
+                            startCamera = null;
+                            toolEditMode = ToolEditMode.None;
 
-								for (var b = 0; b < topTransforms.Length; b++)
-								{
-									if (!topTransforms[b])
-										continue;
-									var gameObject = topTransforms[b].gameObject;
-									if (gameObject.activeInHierarchy &&
-										!CSGPrefabUtility.IsPrefabAsset(gameObject))
-									{
-										dragGameObjects.Add(gameObject);
-									}
-								}
-							} 
+                            UpdateTargetInfo();
 
-							var useRaySnapping = (Event.current.modifiers & EventModifiers.Shift) == EventModifiers.Shift;
-							if (useRaySnapping)
-							{
-								ignoreSetTargets = true;
-								try
-								{
-									if (hoverOverBrushIndex < backupRotations.Length)
-									{ 
-										var brushPosition = backupPositions[hoverOverBrushIndex];
-										var brushRotation = backupRotations[hoverOverBrushIndex];
-										SelectionUtility.HideObjectsRemoteOnly(dragGameObjects);
-										 
-										var intersection	= SceneQueryUtility.FindMeshIntersection(camera, Event.current.mousePosition);
-										var normal			= intersection.worldPlane.normal;
+                            GUIUtility.hotControl = 0;
+                            GUIUtility.keyboardControl = 0;
+                            EditorGUIUtility.editingTextField = false;
+                            Event.current.Use();
 
-										var hoverPosition	= intersection.worldIntersection;
-										var hoverRotation	= SelectionUtility.FindDragOrientation(sceneView, normal, sourceSurfaceAlignment, destinationSurfaceAlignment);
-									
-										RealtimeCSG.CSGGrid.SetForcedGrid(camera, intersection.worldPlane);
+                            RealtimeCSG.CSGGrid.ForceGrid = false;
+                            CSG_EditorGUIUtility.RepaintAll();
+                            break;
+                        }
+                        case EventType.Repaint: {
+                            if (!inCamera)
+                                break;
+                            var textCenter2D = Event.current.mousePosition;
+                            textCenter2D.y += hover_text_distance * 2;
+                            Vector3 delta = worldDeltaMovement;
+                            if (Tools.pivotRotation == PivotRotation.Local) {
+                                delta = GridUtility.CleanPosition(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(delta));
+                            }
 
-										var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
-										switch (activeSnappingMode)
-										{
-                                            case SnapMode.GridSnapping:
-                                            {
+                            var length = delta.magnitude;
+
+                            bool disabled = false;
+                            if (hoverOnBoundsCenter != -1) {
+                                switch (BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter]) {
+                                    case PrincipleAxis.X: disabled = RealtimeCSG.CSGSettings.LockAxisX; break;
+                                    case PrincipleAxis.Y: disabled = RealtimeCSG.CSGSettings.LockAxisY; break;
+                                    case PrincipleAxis.Z: disabled = RealtimeCSG.CSGSettings.LockAxisZ; break;
+                                }
+                            }
+
+                            if (disabled) {
+                                switch (BoundsUtilities.AABBSideAxis[hoverOnBoundsCenter]) {
+                                    case PrincipleAxis.X: PaintUtility.DrawScreenText(textCenter2D, "X axis is locked", CSG_GUIStyleUtility.redTextArea); break;
+                                    case PrincipleAxis.Y: PaintUtility.DrawScreenText(textCenter2D, "Y axis is locked", CSG_GUIStyleUtility.redTextArea); break;
+                                    case PrincipleAxis.Z: PaintUtility.DrawScreenText(textCenter2D, "Z axis is locked", CSG_GUIStyleUtility.redTextArea); break;
+                                }
+
+                            }
+                            else {
+                                PaintUtility.DrawScreenText(textCenter2D,
+                                    "Δ" + Units.ToRoundedDistanceString(length));
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < brushControlIDs.Length; i++) {
+                    var brushControlID = brushControlIDs[i];
+                    if (currentHotControl != brushControlID)
+                        continue;
+                    var type = Event.current.GetTypeForControl(brushControlID);
+                    switch (type) {
+                        case EventType.MouseDrag: {
+                            if (Event.current.button != 0)
+                                break;
+
+                            if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3) {
+                                EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
+                                break;
+                            }
+
+                            EditModeManager.ResetMessage();
+
+                            if (firstMove) {
+                                EditorGUIUtility.SetWantsMouseJumping(1);
+                                extraDeltaMovement = MathConstants.zeroVector3;
+                                originalPoint = hoverIntersectionPoint;
+                                startCamera = camera;
+                                UpdateGrid(startCamera);
+
+                                for (var b = 0; b < topTransforms.Length; b++) {
+                                    if (!topTransforms[b])
+                                        continue;
+                                    var gameObject = topTransforms[b].gameObject;
+                                    if (gameObject.activeInHierarchy &&
+                                        !CSGPrefabUtility.IsPrefabAsset(gameObject)) {
+                                        dragGameObjects.Add(gameObject);
+                                    }
+                                }
+
+                                sourceSurfaceAlignment = PrefabSourceAlignment.AlignedFront;
+                                destinationSurfaceAlignment = PrefabDestinationAlignment.AlignToSurface;
+                                if (activeTransform != null) {
+                                    var topNode = activeTransform.GetComponentInChildren<CSGNode>();
+                                    if (topNode) {
+                                        sourceSurfaceAlignment = topNode.PrefabSourceAlignment;
+                                        destinationSurfaceAlignment = topNode.PrefabDestinationAlignment;
+                                    }
+                                }
+
+                                BoundsUtilities.GetBoundsCornerPoints(targetLocalBounds, projectedBounds);
+                            }
+
+                            var mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                            var worldIntersection = movePlane.RayIntersection(mouseRay);
+                            if (!float.IsNaN(worldIntersection.x) && !float.IsNaN(worldIntersection.y) && !float.IsNaN(worldIntersection.z)) {
+                                if (((prevModifiers & EventModifiers.Shift) != (SelectionUtility.CurrentModifiers & EventModifiers.Shift)
+                                        //|| prevYMode != RealtimeCSG.Grid.YMoveModeActive
+                                    ) &&
+                                    RealtimeCSG.CSGGrid.ForceGrid && startCamera != null) {
+                                    prevModifiers = SelectionUtility.CurrentModifiers;
+                                    //prevYMode = RealtimeCSG.Grid.YMoveModeActive;
+                                    UpdateGridOrientation(realMousePosition);
+                                    extraDeltaMovement += worldDeltaMovement;
+                                }
+
+                                worldIntersection = GeometryUtility.ProjectPointOnPlane(movePlane, worldIntersection);
+                                if (firstMove) {
+                                    originalPoint = worldIntersection;
+                                    worldDeltaMovement = MathConstants.zeroVector3;
+                                    firstMove = false;
+                                }
+                                else
+                                    worldDeltaMovement = //SnapMovementToPlane
+                                        (worldIntersection - originalPoint);
+                            }
+
+                            if (worldDeltaMovement != MathConstants.zeroVector3 &&
+                                cloneDragKeyPressed &&
+                                toolEditMode == ToolEditMode.MovingObject &&
+                                !float.IsNaN(worldDeltaMovement.x) &&
+                                !float.IsNaN(worldDeltaMovement.y) &&
+                                !float.IsNaN(worldDeltaMovement.z)) {
+                                toolEditMode = ToolEditMode.CloneDragging;
+                                topTransforms = EditModeManager.CloneTargets();
+
+                                for (var b = 0; b < topTransforms.Length; b++) {
+                                    if (!topTransforms[b])
+                                        continue;
+                                    var gameObject = topTransforms[b].gameObject;
+                                    if (gameObject.activeInHierarchy &&
+                                        !CSGPrefabUtility.IsPrefabAsset(gameObject)) {
+                                        dragGameObjects.Add(gameObject);
+                                    }
+                                }
+                            }
+
+                            var useRaySnapping = (Event.current.modifiers & EventModifiers.Shift) == EventModifiers.Shift;
+                            if (useRaySnapping) {
+                                ignoreSetTargets = true;
+                                try {
+                                    if (hoverOverBrushIndex < backupRotations.Length) {
+                                        var brushPosition = backupPositions[hoverOverBrushIndex];
+                                        var brushRotation = backupRotations[hoverOverBrushIndex];
+                                        SelectionUtility.HideObjectsRemoteOnly(dragGameObjects);
+
+                                        var intersection = SceneQueryUtility.FindMeshIntersection(camera, Event.current.mousePosition);
+                                        var normal = intersection.worldPlane.normal;
+
+                                        var hoverPosition = intersection.worldIntersection;
+                                        var hoverRotation = SelectionUtility.FindDragOrientation(sceneView, normal, sourceSurfaceAlignment, destinationSurfaceAlignment);
+
+                                        RealtimeCSG.CSGGrid.SetForcedGrid(camera, intersection.worldPlane);
+
+                                        var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
+                                        switch (activeSnappingMode) {
+                                            case SnapMode.GridSnapping: {
                                                 var localPoints = new Vector3[8];
                                                 var localPlane = intersection.worldPlane;
                                                 for (var p = 0; p < localPoints.Length; p++)
@@ -2392,259 +2478,246 @@ namespace RealtimeCSG
                                                 hoverPosition += RealtimeCSG.CSGGrid.SnapDeltaToGrid(camera, MathConstants.zeroVector3, localPoints);
                                                 break;
                                             }
-                                            case SnapMode.RelativeSnapping:
-                                            {
+                                            case SnapMode.RelativeSnapping: {
                                                 hoverPosition += RealtimeCSG.CSGGrid.SnapDeltaRelative(camera, MathConstants.zeroVector3);
                                                 break;
                                             }
                                         }
-                                        hoverPosition = GeometryUtility.ProjectPointOnPlane(intersection.worldPlane, hoverPosition);// + (normal * 0.01f);
-									
-										worldDeltaMovement = hoverPosition - brushPosition;
-									
-										Undo.RecordObjects(topTransforms, "Drag objects");
-										UpdateTargetBounds();
-										CSG_EditorGUIUtility.RepaintAll();
-										var center		= GridUtility.CleanPosition(brushPosition + worldDeltaMovement);
-										var rotation	= hoverRotation * Quaternion.Inverse(brushRotation);
-									
-										MoveRotateObjects(topTransforms, center, rotation, worldDeltaMovement);
-									}
-								}
-								finally
-								{
-									ignoreSetTargets = false;
-									SelectionUtility.ShowObjectsAndUpdate(dragGameObjects);
-									if (!UpdateLoop.IsActive())
-										UpdateLoop.ResetUpdateRoutine();
-									
-									for (int b = 0; b < brushes.Length; b++)
-									{
-										if (brushes[b])
-											BrushOutlineManager.ForceUpdateOutlines(brushes[b].brushNodeID);
-									}
-									
-									CSG_EditorGUIUtility.RepaintAll();
-								}
-							} else
-							{
-								if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
-									break;
-							
-								var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
-								if (MoveObjects(camera, topTransforms, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode))
-									originalPoint = worldIntersection;
-							}
-							break;
-						}
-						case EventType.MouseUp:
-						{
-							if (Event.current.button != 0)
-								break;
-							
-							EditorGUIUtility.SetWantsMouseJumping(0);
-							startCamera = null;
-							toolEditMode = ToolEditMode.None;
-						
-							UpdateTargetInfo();
-						
-							GUIUtility.hotControl = 0;
-							GUIUtility.keyboardControl = 0;
-							EditorGUIUtility.editingTextField = false;
-							Event.current.Use();
 
-							RealtimeCSG.CSGGrid.ForceGrid = false;
-							CSG_EditorGUIUtility.RepaintAll();
-							break;
-						}
-						case EventType.Repaint:
-						{
-							var textCenter2D = Event.current.mousePosition;
-							textCenter2D.y += hover_text_distance * 2;
-						
-							var movement = worldDeltaMovement + extraDeltaMovement;
+                                        hoverPosition = GeometryUtility.ProjectPointOnPlane(intersection.worldPlane, hoverPosition); // + (normal * 0.01f);
 
-							var lockX = (Mathf.Abs(movement.x) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisX || (Mathf.Abs(movePlane.a) >= 1 - MathConstants.EqualityEpsilon));
-							var lockY = (Mathf.Abs(movement.y) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisY || (Mathf.Abs(movePlane.b) >= 1 - MathConstants.EqualityEpsilon));
-							var lockZ = (Mathf.Abs(movement.z) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisZ || (Mathf.Abs(movePlane.c) >= 1 - MathConstants.EqualityEpsilon));
-					
-							var text = Units.ToRoundedDistanceString(movement, lockX, lockY, lockZ);
-							PaintUtility.DrawScreenText(textCenter2D, text);
-							break;
-						}
-					}
-				}
+                                        worldDeltaMovement = hoverPosition - brushPosition;
 
-				if (Tools.current == Tool.Rotate)
-				{
-					for (int i = 0; i < targetBoundEdgeIDs.Length; i++)
-					{
-						var targetBoundEdgeID = targetBoundEdgeIDs[i];
-						if (currentHotControl != targetBoundEdgeID)
-							continue;
-						var type = Event.current.GetTypeForControl(targetBoundEdgeID);
-						switch (type)
-						{
-							case EventType.MouseDrag:
-							{
-								if (Event.current.button != 0)
-									break;
+                                        Undo.RecordObjects(topTransforms, "Drag objects");
+                                        UpdateTargetBounds();
+                                        CSG_EditorGUIUtility.RepaintAll();
+                                        var center = GridUtility.CleanPosition(brushPosition + worldDeltaMovement);
+                                        var rotation = hoverRotation * Quaternion.Inverse(brushRotation);
 
-								if ((RealtimeCSG.CSGSettings.SnapRotation % 360) == 0)
-								{
-									EditModeManager.ShowMessage("Rotational snapping is set to zero, cannot rotate.");
-									break;
-								}
-								EditModeManager.ResetMessage();
+                                        MoveRotateObjects(topTransforms, center, rotation, worldDeltaMovement);
+                                    }
+                                }
+                                finally {
+                                    ignoreSetTargets = false;
+                                    SelectionUtility.ShowObjectsAndUpdate(dragGameObjects);
+                                    if (!UpdateLoop.IsActive())
+                                        UpdateLoop.ResetUpdateRoutine();
 
-								if (firstMove)
-								{
-									EditorGUIUtility.SetWantsMouseJumping(1);
-									extraDeltaMovement = MathConstants.zeroVector3;
-									originalPoint = hoverIntersectionPoint;
-									startCamera = camera;
-									UpdateGrid(startCamera);
-								}
+                                    for (int b = 0; b < brushes.Length; b++) {
+                                        if (brushes[b])
+                                            BrushOutlineManager.ForceUpdateOutlines(brushes[b].brushNodeID);
+                                    }
 
-								var mouseRay = HandleUtility.GUIPointToWorldRay(realMousePosition);
-
-								firstMove = false;
-								var rotatePlane = new CSGPlane(rotateNormal, boundsCenter);
-								rotateMousePosition = rotatePlane.RayIntersection(mouseRay);
-								RotateObjects(topTransforms, rotateCenter, rotateNormal, rotateStart, rotateStartAngle, rotateMousePosition, out rotateCurrentSnappedAngle);
-								break;
-							}
-							case EventType.MouseUp:
-							{
-								if (Event.current.button != 0)
-									break;
-								
-								EditorGUIUtility.SetWantsMouseJumping(0);
-								startCamera = null;
-								toolEditMode = ToolEditMode.None;
-
-								UpdateTargetInfo();
-
-								GUIUtility.hotControl = 0;
-								GUIUtility.keyboardControl = 0;
-								EditorGUIUtility.editingTextField = false;
-								Event.current.Use();
-
-								RealtimeCSG.CSGGrid.ForceGrid = false;
-								CSG_EditorGUIUtility.RepaintAll();
-								break;
-							}
-							case EventType.Repaint:
-							{
-								break;
-							}
-						}
-					}
-				} else
-				{
-					for (int i = 0; i < targetBoundEdgeIDs.Length; i++)
-					{
-						var targetBoundEdgeID = targetBoundEdgeIDs[i];
-						if (currentHotControl != targetBoundEdgeID)
-							continue;
-						var type = Event.current.GetTypeForControl(targetBoundEdgeID);
-						switch (type)
-						{
-							case EventType.MouseDrag:
-							{
-								if (Event.current.button != 0)
-									break;
-							
-								if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3)
-								{
-									EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
-									break;
-								}
-								EditModeManager.ResetMessage();
-							
-						
-								if (firstMove)
-								{
-									EditorGUIUtility.SetWantsMouseJumping(1);
-									originalPoint = hoverIntersectionPoint;
-									startCamera = camera;
-								
-									if (activeSpaceMatrices == null)		
-										activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
-								
-									var localLineOrg	= originalLocalEdgePoints[i];
-									var side1			= BoundsUtilities.AABBEdgeSides[i][0];
-									var side2			= BoundsUtilities.AABBEdgeSides[i][1];
-									var localSideDir1	= targetLocalDirections[side1];
-									var localSideDir2	= targetLocalDirections[side2];
-									var localNormal		= Vector3.Cross(localSideDir1, localSideDir2);
-																	
-									movePlane = new CSGPlane(GridUtility.CleanNormal(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(localNormal)), 
-															 activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(localLineOrg));
-									RealtimeCSG.CSGGrid.SetForcedGrid(camera, movePlane);
-								}
-
-								var mouseRay	    	= HandleUtility.GUIPointToWorldRay(realMousePosition);
-						
-								var worldIntersection = movePlane.RayIntersection(mouseRay);
-								if (float.IsNaN(worldIntersection.x) || float.IsNaN(worldIntersection.y) || float.IsNaN(worldIntersection.z))
-									break;
-
-								worldIntersection = GeometryUtility.ProjectPointOnPlane(movePlane, worldIntersection);
-								if (firstMove)
-								{
-									originalPoint = worldIntersection;
-									worldDeltaMovement = MathConstants.zeroVector3;
-									firstMove = false;
-								} else
-									worldDeltaMovement = SnapMovementToPlane(worldIntersection - originalPoint);
-
-								if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
-									break;
+                                    CSG_EditorGUIUtility.RepaintAll();
+                                }
+                            }
+                            else {
+                                if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
+                                    break;
 
                                 var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
-								MoveBoundsEdge(camera, i, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode);
-								break;
-							}
-							case EventType.MouseUp:
-							{
-								if (Event.current.button != 0)
-									break;
-								
-								EditorGUIUtility.SetWantsMouseJumping(0);
-								startCamera = null;
-								toolEditMode = ToolEditMode.None;
+                                if (MoveObjects(camera, topTransforms, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode))
+                                    originalPoint = worldIntersection;
+                            }
 
-								UpdateTargetInfo();
+                            break;
+                        }
+                        case EventType.MouseUp: {
+                            if (Event.current.button != 0)
+                                break;
 
-								GUIUtility.hotControl = 0;
-								GUIUtility.keyboardControl = 0;
-								EditorGUIUtility.editingTextField = false;
-								Event.current.Use();
+                            EditorGUIUtility.SetWantsMouseJumping(0);
+                            startCamera = null;
+                            toolEditMode = ToolEditMode.None;
 
-								RealtimeCSG.CSGGrid.ForceGrid = false;
-								CSG_EditorGUIUtility.RepaintAll();
-								break;
-							}
-							case EventType.Repaint:
-							{
-								var textCenter2D = realMousePosition;
-								textCenter2D.y += hover_text_distance * 2;
-								Vector3 delta = worldDeltaMovement;
-								if (Tools.pivotRotation == PivotRotation.Local)
-								{
-									delta = GridUtility.CleanPosition(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(delta));
-								}
-								var length = delta.magnitude;
-								PaintUtility.DrawScreenText(textCenter2D,
-									"Δ" + Units.ToRoundedDistanceString(length));
-								// TODO: show actual current length of this axis
-								break;
-							}
-						}
-					}
-				}
-			}	
+                            UpdateTargetInfo();
+
+                            GUIUtility.hotControl = 0;
+                            GUIUtility.keyboardControl = 0;
+                            EditorGUIUtility.editingTextField = false;
+                            Event.current.Use();
+
+                            RealtimeCSG.CSGGrid.ForceGrid = false;
+                            CSG_EditorGUIUtility.RepaintAll();
+                            break;
+                        }
+                        case EventType.Repaint: {
+                            var textCenter2D = Event.current.mousePosition;
+                            textCenter2D.y += hover_text_distance * 2;
+
+                            var movement = worldDeltaMovement + extraDeltaMovement;
+
+                            var lockX = (Mathf.Abs(movement.x) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisX || (Mathf.Abs(movePlane.a) >= 1 - MathConstants.EqualityEpsilon));
+                            var lockY = (Mathf.Abs(movement.y) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisY || (Mathf.Abs(movePlane.b) >= 1 - MathConstants.EqualityEpsilon));
+                            var lockZ = (Mathf.Abs(movement.z) < MathConstants.ConsideredZero) && (RealtimeCSG.CSGSettings.LockAxisZ || (Mathf.Abs(movePlane.c) >= 1 - MathConstants.EqualityEpsilon));
+
+                            var text = Units.ToRoundedDistanceString(movement, lockX, lockY, lockZ);
+                            PaintUtility.DrawScreenText(textCenter2D, text);
+                            break;
+                        }
+                    }
+                }
+
+                if (Tools.current == Tool.Rotate) {
+                    for (int i = 0; i < targetBoundEdgeIDs.Length; i++) {
+                        var targetBoundEdgeID = targetBoundEdgeIDs[i];
+                        if (currentHotControl != targetBoundEdgeID)
+                            continue;
+                        var type = Event.current.GetTypeForControl(targetBoundEdgeID);
+                        switch (type) {
+                            case EventType.MouseDrag: {
+                                if (Event.current.button != 0)
+                                    break;
+
+                                if ((RealtimeCSG.CSGSettings.SnapRotation % 360) == 0) {
+                                    EditModeManager.ShowMessage("Rotational snapping is set to zero, cannot rotate.");
+                                    break;
+                                }
+
+                                EditModeManager.ResetMessage();
+
+                                if (firstMove) {
+                                    EditorGUIUtility.SetWantsMouseJumping(1);
+                                    extraDeltaMovement = MathConstants.zeroVector3;
+                                    originalPoint = hoverIntersectionPoint;
+                                    startCamera = camera;
+                                    UpdateGrid(startCamera);
+                                }
+
+                                var mouseRay = HandleUtility.GUIPointToWorldRay(realMousePosition);
+
+                                firstMove = false;
+                                var rotatePlane = new CSGPlane(rotateNormal, boundsCenter);
+                                rotateMousePosition = rotatePlane.RayIntersection(mouseRay);
+                                RotateObjects(topTransforms, rotateCenter, rotateNormal, rotateStart, rotateStartAngle, rotateMousePosition, out rotateCurrentSnappedAngle);
+                                break;
+                            }
+                            case EventType.MouseUp: {
+                                if (Event.current.button != 0)
+                                    break;
+
+                                EditorGUIUtility.SetWantsMouseJumping(0);
+                                startCamera = null;
+                                toolEditMode = ToolEditMode.None;
+
+                                UpdateTargetInfo();
+
+                                GUIUtility.hotControl = 0;
+                                GUIUtility.keyboardControl = 0;
+                                EditorGUIUtility.editingTextField = false;
+                                Event.current.Use();
+
+                                RealtimeCSG.CSGGrid.ForceGrid = false;
+                                CSG_EditorGUIUtility.RepaintAll();
+                                break;
+                            }
+                            case EventType.Repaint: {
+                                break;
+                            }
+                        }
+                    }
+                }
+                else {
+                    for (int i = 0; i < targetBoundEdgeIDs.Length; i++) {
+                        var targetBoundEdgeID = targetBoundEdgeIDs[i];
+                        if (currentHotControl != targetBoundEdgeID)
+                            continue;
+                        var type = Event.current.GetTypeForControl(targetBoundEdgeID);
+                        switch (type) {
+                            case EventType.MouseDrag: {
+                                if (Event.current.button != 0)
+                                    break;
+
+                                if (RealtimeCSG.CSGSettings.SnapVector == MathConstants.zeroVector3) {
+                                    EditModeManager.ShowMessage("Positional snapping is set to zero, cannot move.");
+                                    break;
+                                }
+
+                                EditModeManager.ResetMessage();
+
+
+                                if (firstMove) {
+                                    EditorGUIUtility.SetWantsMouseJumping(1);
+                                    originalPoint = hoverIntersectionPoint;
+                                    startCamera = camera;
+
+                                    if (activeSpaceMatrices == null)
+                                        activeSpaceMatrices = SpaceMatrices.Create(activeTransform);
+
+                                    var localLineOrg = originalLocalEdgePoints[i];
+                                    var side1 = BoundsUtilities.AABBEdgeSides[i][0];
+                                    var side2 = BoundsUtilities.AABBEdgeSides[i][1];
+                                    var localSideDir1 = targetLocalDirections[side1];
+                                    var localSideDir2 = targetLocalDirections[side2];
+                                    var localNormal = Vector3.Cross(localSideDir1, localSideDir2);
+
+                                    movePlane = new CSGPlane(GridUtility.CleanNormal(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(localNormal)),
+                                        activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(localLineOrg));
+                                    RealtimeCSG.CSGGrid.SetForcedGrid(camera, movePlane);
+                                }
+
+                                var mouseRay = HandleUtility.GUIPointToWorldRay(realMousePosition);
+
+                                var worldIntersection = movePlane.RayIntersection(mouseRay);
+                                if (float.IsNaN(worldIntersection.x) || float.IsNaN(worldIntersection.y) || float.IsNaN(worldIntersection.z))
+                                    break;
+
+                                worldIntersection = GeometryUtility.ProjectPointOnPlane(movePlane, worldIntersection);
+                                if (firstMove) {
+                                    originalPoint = worldIntersection;
+                                    worldDeltaMovement = MathConstants.zeroVector3;
+                                    firstMove = false;
+                                }
+                                else
+                                    worldDeltaMovement = SnapMovementToPlane(worldIntersection - originalPoint);
+
+                                if (float.IsNaN(worldDeltaMovement.x) || float.IsNaN(worldDeltaMovement.y) || float.IsNaN(worldDeltaMovement.z))
+                                    break;
+
+                                var activeSnappingMode = RealtimeCSG.CSGSettings.ActiveSnappingMode;
+                                MoveBoundsEdge(camera, i, worldDeltaMovement, out worldDeltaMovement, activeSnappingMode);
+                                break;
+                            }
+                            case EventType.MouseUp: {
+                                if (Event.current.button != 0)
+                                    break;
+
+                                EditorGUIUtility.SetWantsMouseJumping(0);
+                                startCamera = null;
+                                toolEditMode = ToolEditMode.None;
+
+                                UpdateTargetInfo();
+
+                                GUIUtility.hotControl = 0;
+                                GUIUtility.keyboardControl = 0;
+                                EditorGUIUtility.editingTextField = false;
+                                Event.current.Use();
+
+                                RealtimeCSG.CSGGrid.ForceGrid = false;
+                                CSG_EditorGUIUtility.RepaintAll();
+                                break;
+                            }
+                            case EventType.Repaint: {
+                                var textCenter2D = realMousePosition;
+                                textCenter2D.y += hover_text_distance * 2;
+                                Vector3 delta = worldDeltaMovement;
+                                if (Tools.pivotRotation == PivotRotation.Local) {
+                                    delta = GridUtility.CleanPosition(activeSpaceMatrices.activeLocalToWorld.MultiplyVector(delta));
+                                }
+
+                                var length = delta.magnitude;
+                                PaintUtility.DrawScreenText(textCenter2D,
+                                    "Δ" + Units.ToRoundedDistanceString(length));
+                                // TODO: show actual current length of this axis
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+                Debug.Log($"{e.Message}\n{e.StackTrace}");
+            }
 			finally
 			{
 				if (originalEventType == EventType.MouseUp ||

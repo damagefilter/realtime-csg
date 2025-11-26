@@ -2190,10 +2190,14 @@ namespace RealtimeCSG
 						if (!sceneRect.Contains(Event.current.mousePosition))
 							break;
 
-						if (GUIUtility.hotControl != 0 ||
-							Event.current.button != 0 ||
-							(SelectionUtility.CurrentModifiers & EventModifiers.Alt) == EventModifiers.Alt)
-							break;
+                        if (GUIUtility.hotControl != 0 || Event.current.button != 0 || (SelectionUtility.CurrentModifiers & EventModifiers.Alt) == EventModifiers.Alt) {
+                            // resolve some dragging intent state issue.
+                            GUIUtility.hotControl = 0;
+                            GUIUtility.keyboardControl = 0;
+                            _editMode = EditMode.None;
+                            EditorGUIUtility.editingTextField = false;
+                            break;
+                        }
 
 						if (SelectionUtility.CurrentModifiers == EventModifiers.Shift)
 						{

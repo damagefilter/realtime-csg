@@ -1982,7 +1982,6 @@ namespace RealtimeCSG
                             // this isn't an actual fix, it's a bandaid.
                             // But this is a lot of ode to take in and I want my peace and quiet right now.
                             toolEditMode = ToolEditMode.None;
-                            Debug.Log("Got one. Setting");
                             GUIUtility.hotControl = 0;
                             GUIUtility.keyboardControl = 0;
                             EditorGUIUtility.editingTextField = false;

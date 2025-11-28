@@ -68,25 +68,31 @@ namespace RealtimeCSG
 			var zTestGenericLineMaterial    = MaterialUtility.ZTestGenericLine;
 			var noZTestGenericLineMaterial  = MaterialUtility.NoZTestGenericLine;
             var coloredPolygonMaterial      = MaterialUtility.ColoredPolygonMaterial;
+            MaterialUtility.LineAlphaMultiplier = .65f;
 
             _polygonManager.Render(coloredPolygonMaterial);
 			
-			MaterialUtility.LineAlphaMultiplier = 0.75f;
-            MaterialUtility.LineDashMultiplier = 4.0f;
-			MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale * 2.0f;
-			_outlinesManager.Render(noZTestGenericLineMaterial);
-			
-			MaterialUtility.LineDashMultiplier = 0.0f;
-			MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale * 2.0f;
-			_outlinesManager.Render(zTestGenericLineMaterial);
+            // I get this renders something else - ie outlines.
+            // But visually, I cannot see a difference.
+            
+			// MaterialUtility.LineAlphaMultiplier = 0.75f;
+   //          MaterialUtility.LineDashMultiplier = 1;
+			// MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale;
+			// _outlinesManager.Render(noZTestGenericLineMaterial);
+			//
+			// MaterialUtility.LineDashMultiplier = 0.0f;
+			// MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale * 2.0f;
+			// _outlinesManager.Render(zTestGenericLineMaterial);
 
 
-			MaterialUtility.LineDashMultiplier = 4.0f;
-			MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale;
+            MaterialUtility.LineAlphaMultiplier = .2f;
+			MaterialUtility.LineDashMultiplier = 0f;
+			MaterialUtility.LineThicknessMultiplier = 1f;
 			_edgeColorsManager.Render(noZTestGenericLineMaterial);
-
+   
+            MaterialUtility.LineAlphaMultiplier = .75f;
 			MaterialUtility.LineDashMultiplier = 0.0f;
-			MaterialUtility.LineThicknessMultiplier = GUIConstants.thickLineScale;
+			MaterialUtility.LineThicknessMultiplier = 1;
 			_edgeColorsManager.Render(zTestGenericLineMaterial);
 
             MaterialUtility.LineAlphaMultiplier = 1.0f;

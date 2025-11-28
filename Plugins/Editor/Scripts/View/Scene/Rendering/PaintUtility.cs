@@ -12,18 +12,31 @@ namespace RealtimeCSG
 	{
 
 		#region Materials
-		private static Material customDotMaterial;
-		public static Material CustomDotMaterial
+		private static Material customDotNoDepthMaterial;
+		public static Material CustomDotNoDepthMaterial
 		{
 			get
 			{
-				if (!customDotMaterial)
+				if (!customDotNoDepthMaterial)
 				{
-					customDotMaterial = MaterialUtility.GenerateEditorMaterial("customDot");
+					customDotNoDepthMaterial = MaterialUtility.GenerateEditorMaterial("customDot");
 				}
-				return customDotMaterial;
+				return customDotNoDepthMaterial;
 			}
 		}
+        
+        private static Material customDotWithDepthMaterial;
+        public static Material CustomDotWithDepthMaterial
+        {
+            get
+            {
+                if (!customDotWithDepthMaterial)
+                {
+                    customDotWithDepthMaterial = MaterialUtility.GenerateEditorMaterial("customDotDepth");
+                }
+                return customDotWithDepthMaterial;
+            }
+        }
 
 		private static Material customWireMaterial;
 		private static Material CustomWireMaterial
@@ -118,7 +131,7 @@ namespace RealtimeCSG
 			pointMeshManager.Begin();
 			pointMeshManager.DrawPoints(camera, positions, sizes, colors);
 			pointMeshManager.End();
-			pointMeshManager.Render(CustomDotMaterial, CustomSurfaceNoDepthMaterial);
+			pointMeshManager.Render(CustomDotNoDepthMaterial, CustomDotWithDepthMaterial, CustomSurfaceNoDepthMaterial);
 
 			/*
 			var right	= camera.transform.right;
@@ -195,7 +208,7 @@ namespace RealtimeCSG
 			var p3	= (- right + up);
 				
 
-			var material = CustomDotMaterial;
+			var material = CustomDotNoDepthMaterial;
 			if (material && material.SetPass(0))
 			{
 				GL.Begin(GL.QUADS);
@@ -260,7 +273,7 @@ namespace RealtimeCSG
 						
 			Color c  = Handles.color * new Color (1, 1, 1, .5f) + (Handles.lighting ? new Color (0,0,0,.5f) : new Color (0,0,0,0)) * new Color (1, 1, 1, 0.99f);
 
-			var material = CustomDotMaterial;
+			var material = CustomDotNoDepthMaterial;
 			if (material && material.SetPass(0))
 			{
 				GL.Begin(GL.QUADS);
@@ -308,7 +321,7 @@ namespace RealtimeCSG
 						
 			Color c  = Handles.color * new Color (1, 1, 1, .5f) + (Handles.lighting ? new Color (0,0,0,.5f) : new Color (0,0,0,0)) * new Color (1, 1, 1, 0.99f);
 
-			var material = CustomDotMaterial;
+			var material = CustomDotNoDepthMaterial;
 			if (material && material.SetPass(0))
 			{
 				GL.Begin(GL.QUADS);
@@ -419,7 +432,7 @@ namespace RealtimeCSG
 						
 			Color c  = Handles.color * new Color (1, 1, 1, .5f) + (Handles.lighting ? new Color (0,0,0,.5f) : new Color (0,0,0,0)) * new Color (1, 1, 1, 0.99f);
 
-			var material = CustomDotMaterial;
+			var material = CustomDotNoDepthMaterial;
 			if (material && material.SetPass(0))
 			{
 				GL.Begin(GL.TRIANGLES);

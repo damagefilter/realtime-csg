@@ -16,8 +16,7 @@ namespace InternalRealtimeCSG
 		#endregion
 
 		#region ForceUpdateOutlines
-		public static void ForceUpdateOutlines(int brushNodeId)
-		{
+		public static void ForceUpdateOutlines(int brushNodeId) {
 			var externalOutlineGeneration = InternalCSGModelManager.External.GetBrushOutlineGeneration(brushNodeId);
 			var outline = new GeometryWireframe();
 			if (!InternalCSGModelManager.External.GetBrushOutline(brushNodeId, out outline))

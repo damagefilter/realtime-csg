@@ -149,18 +149,23 @@ namespace RealtimeCSG
 			for (int i = 0; i <= currentPointMesh; i++) pointMeshes[i].CommitMesh();
 		}
 
-		public void Render(Material pointMaterial, Material lineMaterial)
+		public void Render(Material noZTestPointMaterial, Material zTestPointMaterial, Material lineMaterial)
 		{
-			if (pointMaterial.SetPass(0))
-			{
-				for (int i = 0; i <= currentPointMesh; i++)
-					pointMeshes[i].DrawPoints();
-			}
-			if (lineMaterial.SetPass(0))
-			{
-				for (int i = 0; i <= currentPointMesh; i++)
-					pointMeshes[i].DrawLines();
-			}
+            if (zTestPointMaterial.SetPass(0)) {
+                for (int i = 0; i <= currentPointMesh; i++)
+                    pointMeshes[i].DrawPoints();
+            }
+
+            if (noZTestPointMaterial.SetPass(0)) {
+                noZTestPointMaterial.SetFloat("_AlphaMultiplier", .25f);
+                for (int i = 0; i <= currentPointMesh; i++)
+                    pointMeshes[i].DrawPoints();
+            }
+			// if (lineMaterial.SetPass(0))
+			// {
+			// 	for (int i = 0; i <= currentPointMesh; i++)
+			// 		pointMeshes[i].DrawLines();
+			// }
 		}
 
 		List<PointMesh> pointMeshes = new List<PointMesh>();

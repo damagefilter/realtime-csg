@@ -22,8 +22,7 @@ namespace RealtimeCSG
 		static bool forceOutlineUpdate = false;
 		internal static void SetOutlineDirty() { forceOutlineUpdate = false; }
 		
-		internal static void OnPaint(SceneView sceneView)
-        {
+		internal static void OnPaint(SceneView sceneView) {
             if (!sceneView)
                 return;
 

@@ -1269,8 +1269,7 @@ namespace RealtimeCSG
 			}
 		}
 
-		void RenderHighlightedEdge(int highlightEdge)
-		{
+		void RenderHighlightedEdge(int highlightEdge) {
 			var localPoint1	= targetLocalPoints[BoundsUtilities.AABBEdgeIndices[highlightEdge][0]];
 			var localPoint2	= targetLocalPoints[BoundsUtilities.AABBEdgeIndices[highlightEdge][1]];
 			PaintUtility.DrawLine(activeSpaceMatrices.activeLocalToWorld, localPoint1, localPoint2, GUIConstants.oldThickLineScale, ColorSettings.BoundsEdgeHover);
@@ -1476,10 +1475,10 @@ namespace RealtimeCSG
                         Color boundOutlinesColor = ColorSettings.BoundsOutlines;
 
                         if (!mouseIsDragging || (Tools.current != Tool.Rotate) || (hoverOnBoundsEdge == -1)) {
-                            PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale * 2.0f, meshEdgeOutlineColor);
+                            // PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale * 2.0f, meshEdgeOutlineColor);
                             PaintUtility.DrawUnoccludedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, meshEdgeOutlineColor);
-                            PaintUtility.DrawDottedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, boundOutlinesColor, 4.0f);
-                            PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale, boundOutlinesColor);
+                            // PaintUtility.DrawDottedLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, boundOutlinesColor, 4.0f);
+                            // PaintUtility.DrawLines(activeSpaceMatrices.activeLocalToWorld, targetLocalPoints, BoundsUtilities.AABBLineIndices, GUIConstants.oldLineScale, boundOutlinesColor);
                         }
 
                         if (!sceneView.camera.orthographic && CSGSettings.GridVisible) {
@@ -1494,7 +1493,7 @@ namespace RealtimeCSG
                                     var pt0 = activeSpaceMatrices.activeLocalToWorld.MultiplyPoint(targetLocalPoints[i]);
                                     var pt1 = RealtimeCSG.CSGGrid.CurrentGridPlane.Project(pt0);
                                     max = Mathf.Max(max, (pt0.y - pt1.y));
-                                    PaintUtility.DrawDottedLine(pt0, pt1, boundOutlinesColor, 4.0f);
+                                    // PaintUtility.DrawDottedLine(pt0, pt1, boundOutlinesColor, 4.0f);
                                     vertices[i] = pt1;
                                 }
                             }
@@ -1514,7 +1513,7 @@ namespace RealtimeCSG
                             }
                             else {
                                 //PaintUtility.DrawPolygon(vertices, ShapeDrawingFill);
-                                PaintUtility.DrawDottedWirePolygon(vertices, boundOutlinesColor);
+                                // PaintUtility.DrawDottedWirePolygon(vertices, boundOutlinesColor);
                                 //PaintUtility.DrawWirePolygon(vertices, boundOutlinesColor);
                             }
                         }

@@ -25,8 +25,8 @@ namespace RealtimeCSG.Helpers
 		internal static AABB		originalBounds	= new AABB();
 		internal static readonly int BoundsHash = "Bounds".GetHashCode();		
 
-		internal static AABB Do(Camera camera, AABB bounds, Quaternion worldToLocalRotation, bool showEdgePoints = true)
-		{
+		internal static AABB Do(Camera camera, AABB bounds, Quaternion worldToLocalRotation, bool showEdgePoints = true) {
+            // return bounds;
 			for (int i = 0; i < sideControlIDs.Length; i++)
 				sideControlIDs[i] = GUIUtility.GetControlID(BoundsHash, FocusType.Passive);
 

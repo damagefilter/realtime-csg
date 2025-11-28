@@ -13,7 +13,7 @@ namespace RealtimeCSG
         public const float  backHandleScale         = 0.8f;
         public const float  hoverHandleScale        = handleScale * 1.2f;
         public const float  lineScale               = 1.5f;
-        public const float  thickLineScale          = 1.5f;
+        public const float  thickLineScale          = 1f;
         public const float  thinLineScale           = 1.0f;
 
         public const float  oldLineScale            = 1.5f / 32.0f;

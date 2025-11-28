@@ -1,20 +1,19 @@
 ﻿//UNITY_SHADER_NO_UPGRADE
-Shader "Hidden/CSG/internal/customDot"
+Shader "Hidden/CSG/internal/customDotDepth"
 {
 	Properties 
 	{
-        _AlphaMultiplier("AlphaMultiplier", Float) = 1.0
-    }
+	}
 	SubShader 
 	{
 		Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
 		LOD 200
 
 		Lighting Off
-		ZTest Off
+		ZTest LEqual
         Cull Off
         ZWrite Off
-		Offset -1, -1
+		//Offset -1 -1 // why do I get a parser error here?
 		Blend One OneMinusSrcAlpha
 
         Pass 
@@ -26,8 +25,6 @@ Shader "Hidden/CSG/internal/customDot"
 			
 				#include "UnityCG.cginc"
 
-				float _AlphaMultiplier;
-				
 				struct v2f 
 				{
  					float4 pos   : SV_POSITION;
@@ -38,6 +35,7 @@ Shader "Hidden/CSG/internal/customDot"
 				{
 					v2f o;
 					o.pos	= mul (UNITY_MATRIX_MVP, v.vertex);
+					o.pos.z += 0.00105f;	// I would use Offset if it actually worked ..
 					o.color = v.color;
 					return o;
 				}
@@ -45,7 +43,6 @@ Shader "Hidden/CSG/internal/customDot"
 				fixed4 frag (v2f input) : SV_Target
 				{
 					fixed4 col = input.color;
-				    col.a *= _AlphaMultiplier;
 					col.rgb *= col.a;
 					return col;
 				}

@@ -24,7 +24,7 @@ Shader "Hidden/CSG/internal/NoZTestGenericLine"
 		ColorMask RGB
 		Lighting Off
         ZWrite Off
-		ZTest Off
+		ZTest Greater // was Off
 		Cull Off
 		Blend One OneMinusSrcAlpha
 		Offset -1, -50
@@ -120,7 +120,7 @@ Shader "Hidden/CSG/internal/NoZTestGenericLine"
 
 					o.screenPosition3 = ComputeScreenPos(screenPosition0);
 					offset.x = thickness * 0.25f;
-					offset.z *= (_dashMultiplier * max(1,_ScreenParams.z)) / 0.125f;
+					offset.z = (_dashMultiplier * max(1,_ScreenParams.z)) / 0.125f;
 					o.offset = offset.xyz;
 
 					o.color = color;

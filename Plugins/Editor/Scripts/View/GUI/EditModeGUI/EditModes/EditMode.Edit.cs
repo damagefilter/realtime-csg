@@ -1172,8 +1172,7 @@ namespace RealtimeCSG
 		bool ShouldDrawAnyPoints(Camera camera) { return ShouldDrawBrushPoints() || ShouldDrawPolygonPoints(camera); }
 			 
 
-		private void OnPaint(SceneView sceneView)
-		{
+		private void OnPaint(SceneView sceneView) {
             var camera = sceneView.camera;
             if (!camera)
 				return;
@@ -1261,7 +1260,7 @@ namespace RealtimeCSG
                         }
                     }
 					pointMeshManager.End();
-					pointMeshManager.Render(PaintUtility.CustomDotMaterial, PaintUtility.CustomSurfaceNoDepthMaterial);
+					pointMeshManager.Render(PaintUtility.CustomDotNoDepthMaterial, PaintUtility.CustomDotWithDepthMaterial, PaintUtility.CustomSurfaceNoDepthMaterial);
 				}
 
 				if (currentTool == Tool.Rotate && _editMode == EditMode.RotateEdge)

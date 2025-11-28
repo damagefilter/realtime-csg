@@ -1,6 +1,17 @@
-This github page holds the updated version of the Unity plugin Realtime-CSG
+This is a reckless fork of the original Realtime-CSG-for-Unity project.
+Here, I'm trying to hackjob my way around the codebase to coerce this bad boy into cooperating with whichever Unity version I'm currently using.
 
-If you use this plugin, please let us know, we'd love to see what you've done with it!
+Also making some adjustments, as far as that can go because this code really needs some proper TLC
+and the guts to just break backwards compatibility. 
+
+I don't care about backwards compat. But I don't have the time to do anything substantial.
+
+Currently, this fork somewhat runs on Unity 6.
+There are some issues with input handling and some mystery bugs with selections after baking lightmaps.
+
+But it works.
+
+If you use this plugin, please let the good folks over at the source repo know!
 
 ![Example](Readme/Images/house_view.png)
 <sup>Programmer art example. Note: couch, plants and some other small props are meshes, not CSG</sup>

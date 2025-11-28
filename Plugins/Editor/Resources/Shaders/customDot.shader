@@ -38,6 +38,7 @@ Shader "Hidden/CSG/internal/customDot"
 				{
 					v2f o;
 					o.pos	= mul (UNITY_MATRIX_MVP, v.vertex);
+				    o.pos.z -= 0.00105f;	// I would use Offset if it actually worked ..
 					o.color = v.color;
 					return o;
 				}

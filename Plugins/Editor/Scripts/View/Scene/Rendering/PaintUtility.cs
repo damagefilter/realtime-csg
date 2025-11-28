@@ -208,15 +208,17 @@ namespace RealtimeCSG
 			var p3	= (- right + up);
 				
 
+            // Draw the "behind" thingies,
 			var material = CustomDotNoDepthMaterial;
 			if (material && material.SetPass(0))
 			{
+                material.SetFloat("_AlphaMultiplier", .25f);
 				GL.Begin(GL.QUADS);
 				for (int p = 0, d = 0; p < points; p++, d+=2)
 				{
 					var position	= matrix.MultiplyPoint(positions[p]);
 					var size		= sizes[p];
-
+			
 					GL.Color(colors[d + 1]);
 					{ 
 						GL.Vertex(position + (p0 * size));
@@ -227,30 +229,53 @@ namespace RealtimeCSG
 				}
 				GL.End();
 			}
+            
+            // Draw the thingies in front with full opacity.
+            material = CustomDotWithDepthMaterial;
+            if (material && material.SetPass(0))
+            {
+                GL.Begin(GL.QUADS);
+                for (int p = 0, d = 0; p < points; p++, d+=2)
+                {
+                    var position	= matrix.MultiplyPoint(positions[p]);
+                    var size		= sizes[p];
+			
+                    GL.Color(colors[d + 1]);
+                    { 
+                        GL.Vertex(position + (p0 * size));
+                        GL.Vertex(position + (p1 * size));
+                        GL.Vertex(position + (p2 * size));
+                        GL.Vertex(position + (p3 * size));
+                    }
+                }
+                GL.End();
+            }
 
-			material = CustomSurfaceNoDepthMaterial;
-			if (material && material.SetPass(0))
-			{
-				GL.Begin(GL.LINES);
-				for (int p = 0, d = 0; p < points; p++, d+=2)
-				{
-					var position	= matrix.MultiplyPoint(positions[p]);
-					var size		= sizes[p];
-					var dp0			= position + (p0 * size);
-					var dp1			= position + (p1 * size);
-					var dp2			= position + (p2 * size);
-					var dp3			= position + (p3 * size);
-
-					GL.Color(colors[d + 0]);
-					{ 
-						GL.Vertex(dp0); GL.Vertex(dp1);
-						GL.Vertex(dp1); GL.Vertex(dp2);
-						GL.Vertex(dp2); GL.Vertex(dp3);
-						GL.Vertex(dp3); GL.Vertex(dp0);
-					}
-				}
-				GL.End();
-			}
+            // these are the gray outlines - they are meant so you can tell some points apart.
+            // But really ... it is of no consequence wether you see them or not. They look kinda funky, if anything.
+			// material = CustomSurfaceNoDepthMaterial;
+			// if (material && material.SetPass(0))
+			// {
+			// 	GL.Begin(GL.LINES);
+			// 	for (int p = 0, d = 0; p < points; p++, d+=2)
+			// 	{
+			// 		var position	= matrix.MultiplyPoint(positions[p]);
+			// 		var size		= sizes[p];
+			// 		var dp0			= position + (p0 * size);
+			// 		var dp1			= position + (p1 * size);
+			// 		var dp2			= position + (p2 * size);
+			// 		var dp3			= position + (p3 * size);
+			//
+			// 		GL.Color(colors[d + 0]);
+			// 		{ 
+			// 			GL.Vertex(dp0); GL.Vertex(dp1);
+			// 			GL.Vertex(dp1); GL.Vertex(dp2);
+			// 			GL.Vertex(dp2); GL.Vertex(dp3);
+			// 			GL.Vertex(dp3); GL.Vertex(dp0);
+			// 		}
+			// 	}
+			// 	GL.End();
+			// }
 		}
 		
 		public static void SquareDotCap(int controlID, Vector3 position, Quaternion rotation, float size)
@@ -286,19 +311,19 @@ namespace RealtimeCSG
 				}
 				GL.End();
 			}
-			material = CustomSurfaceNoDepthMaterial;
-			if (material && material.SetPass(0))
-			{
-				GL.Begin(GL.LINES);
-				{
-					GL.Color(Color.black);
-					GL.Vertex(p0); GL.Vertex(p1);
-					GL.Vertex(p1); GL.Vertex(p2);
-					GL.Vertex(p2); GL.Vertex(p3);
-					GL.Vertex(p3); GL.Vertex(p0);
-				}
-				GL.End();
-			}
+			// material = CustomSurfaceNoDepthMaterial;
+			// if (material && material.SetPass(0))
+			// {
+			// 	GL.Begin(GL.LINES);
+			// 	{
+			// 		GL.Color(Color.black);
+			// 		GL.Vertex(p0); GL.Vertex(p1);
+			// 		GL.Vertex(p1); GL.Vertex(p2);
+			// 		GL.Vertex(p2); GL.Vertex(p3);
+			// 		GL.Vertex(p3); GL.Vertex(p0);
+			// 	}
+			// 	GL.End();
+			// }
 		}
 		
 		public static void DiamondDotCap(int controlID, Vector3 position, Quaternion rotation, float size)

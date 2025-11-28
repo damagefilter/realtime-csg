@@ -13,7 +13,6 @@ Shader "Hidden/CSG/internal/customDotDepth"
 		ZTest LEqual
         Cull Off
         ZWrite Off
-		//Offset -1 -1 // why do I get a parser error here?
 		Blend One OneMinusSrcAlpha
 
         Pass 
@@ -35,7 +34,7 @@ Shader "Hidden/CSG/internal/customDotDepth"
 				{
 					v2f o;
 					o.pos	= mul (UNITY_MATRIX_MVP, v.vertex);
-					o.pos.z += 0.00105f;	// I would use Offset if it actually worked ..
+					o.pos.z -= 0.00105f;	// I would use Offset if it actually worked ..
 					o.color = v.color;
 					return o;
 				}

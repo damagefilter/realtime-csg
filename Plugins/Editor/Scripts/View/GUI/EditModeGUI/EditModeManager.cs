@@ -70,14 +70,14 @@ namespace RealtimeCSG
 			}
 		}
 
-		static public IEditMode CurrentTool
+		public static IEditMode CurrentTool
 		{
 			get 
 			{
 				InitTools();
 
 				if (instance.generateMode)
-					return brushTools[(int)ToolEditMode.Generate] as EditModeGenerate;
+					return brushTools[(int)ToolEditMode.Generate];
 				
 				var editMode = instance.editMode;
 				if (editMode < firstEditMode ||

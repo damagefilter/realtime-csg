@@ -886,7 +886,7 @@ namespace InternalRealtimeCSG
 					continue;
 
 				if (ignoreUnrenderables && !ModelTraits.WillModelRender(model) &&
-					!Selection.Contains(model.gameObject.GetInstanceID()))
+					!Selection.Contains(model.gameObject.GetEntityId()))
 					continue;
 
 				__foundModels[foundModelCount] = model;
@@ -946,7 +946,7 @@ namespace InternalRealtimeCSG
                 return false;
 
             if (ignoreUnrenderables && !ModelTraits.WillModelRender(model) &&
-                !Selection.Contains(model.gameObject.GetInstanceID()))
+                !Selection.Contains(model.gameObject.GetEntityId()))
                 return false;
 
 			LegacyBrushIntersection[] modelIntersections;
@@ -1007,7 +1007,7 @@ namespace InternalRealtimeCSG
 					continue;
 					
 				if (ignoreUnrenderables && !ModelTraits.WillModelRender(model) &&
-					!Selection.Contains(model.gameObject.GetInstanceID()))
+					!Selection.Contains(model.gameObject.GetEntityId()))
 					continue;
 
 				LegacyBrushIntersection[] modelIntersections;

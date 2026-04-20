@@ -90,19 +90,19 @@ namespace RealtimeCSG
 			
 			unityMethods.DebugLog           = delegate (string message, int uniqueObjectID)
 			{
-				Debug.Log(message, (uniqueObjectID != 0) ? EditorUtility.InstanceIDToObject(uniqueObjectID) : null);
+				Debug.Log(message, (uniqueObjectID != 0) ? EditorUtility.EntityIdToObject(uniqueObjectID) : null);
 			};
 			unityMethods.DebugLogError      = delegate (string message, int uniqueObjectID) 
 			{
-				Debug.LogError(message, (uniqueObjectID != 0) ? EditorUtility.InstanceIDToObject(uniqueObjectID) : null);
+				Debug.LogError(message, (uniqueObjectID != 0) ? EditorUtility.EntityIdToObject(uniqueObjectID) : null);
 			};
 			unityMethods.DebugLogWarning    = delegate (string message, int uniqueObjectID) 
 			{
-				Debug.LogWarning(message, (uniqueObjectID != 0) ? EditorUtility.InstanceIDToObject(uniqueObjectID) : null);
+				Debug.LogWarning(message, (uniqueObjectID != 0) ? EditorUtility.EntityIdToObject(uniqueObjectID) : null);
 			};
 			unityMethods.NameForUserID		= delegate (int uniqueObjectID)
 			{
-				var obj = (uniqueObjectID != 0) ? EditorUtility.InstanceIDToObject(uniqueObjectID) : null;
+				var obj = (uniqueObjectID != 0) ? EditorUtility.EntityIdToObject(uniqueObjectID) : null;
 				if (obj == null)
 					return "<unknown>";
 				else
@@ -301,7 +301,7 @@ namespace RealtimeCSG
 			var intersectionList = new List<LegacyBrushIntersection>();			
 			for (int i = 0, t = 0; i < intersectionCount; i++, t+=3)
 			{
-				var obj					= EditorUtility.InstanceIDToObject(__outputIntersections[i].brushUserID);
+				var obj					= EditorUtility.EntityIdToObject(__outputIntersections[i].brushUserID);
 				var monoBehaviour = obj as MonoBehaviour;
 				if (monoBehaviour == null || !monoBehaviour)
 					continue;
@@ -412,7 +412,7 @@ namespace RealtimeCSG
 				
 				for (int i = 0, t = 0; i < intersectionCount; i++, t+=3)
 				{
-					var obj					= EditorUtility.InstanceIDToObject(__outputIntersections[i].brushUserID);
+					var obj					= EditorUtility.EntityIdToObject(__outputIntersections[i].brushUserID);
 					var monoBehaviour = obj as MonoBehaviour;
 					if (monoBehaviour == null || !monoBehaviour)
 						continue;
@@ -624,7 +624,7 @@ namespace RealtimeCSG
 			bool found = false;
 			for (int i = ids.Length - 1; i >= 0; i--)
 			{
-				var obj			= EditorUtility.InstanceIDToObject(ids[i]);
+				var obj			= EditorUtility.EntityIdToObject(ids[i]);
 				var brush		= obj as MonoBehaviour;
 				var gameObject	= (brush != null) ? brush.gameObject : null;
 				if (gameObject == null)

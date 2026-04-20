@@ -704,7 +704,7 @@ namespace InternalRealtimeCSG
 			PhysicsMaterial physicsMaterial = null;
 			if (meshDescription.surfaceParameter != 0)
 			{
-				var obj = EditorUtility.InstanceIDToObject(meshDescription.surfaceParameter);
+				var obj = EditorUtility.EntityIdToObject(meshDescription.surfaceParameter);
 				if (obj)
 				{
 					switch (meshDescription.meshQuery.LayerParameterIndex)

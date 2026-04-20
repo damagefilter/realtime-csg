@@ -12,7 +12,7 @@ namespace RealtimeCSG
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 				return;
 
-			var o = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+			var o = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
 			if (selectionRect.Contains(Event.current.mousePosition))
 			{

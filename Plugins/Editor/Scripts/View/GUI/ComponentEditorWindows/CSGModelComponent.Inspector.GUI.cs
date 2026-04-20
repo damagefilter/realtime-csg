@@ -1302,7 +1302,7 @@ namespace RealtimeCSG
                                     {
                                         instance.RenderMaterial		= null;
                                         instance.PhysicsMaterial	= null;
-                                        var obj = EditorUtility.InstanceIDToObject(meshDescription.surfaceParameter);
+                                        var obj = EditorUtility.EntityIdToObject(meshDescription.surfaceParameter);
                                         if (obj)
                                         { 
                                             switch (meshDescription.meshQuery.LayerParameterIndex)

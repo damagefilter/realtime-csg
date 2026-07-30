@@ -644,7 +644,8 @@ namespace RealtimeCSG
 								backupData[t].brushCopy.gameObject.SetActive(needCopies);
 							}
 						}
-						if (clipSides[t] == ClipSide.CompletelyInside)
+                        // fix annoying split issue as suggested here: https://github.com/LogicalError/realtime-CSG-for-unity/issues/413
+						if (clipSides[t] == ClipSide.CompletelyInside && clipMode != ClipMode.Split)
 						{
 							backupData[t].removeOnCommit = true;
 							if (brush.gameObject.activeSelf)

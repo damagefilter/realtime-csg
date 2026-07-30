@@ -7,6 +7,9 @@ using System.Linq;
 
 namespace RealtimeCSG
 {
+    /// <summary>
+    /// This renders points such as the green gizmos in face centers and on corners.
+    /// </summary>
 	sealed class PointMeshManager
 	{
 		sealed class PointMesh
@@ -161,6 +164,7 @@ namespace RealtimeCSG
                 for (int i = 0; i <= currentPointMesh; i++)
                     pointMeshes[i].DrawPoints();
             }
+            // this draws gray outlines around the points which I find looks funky.
 			// if (lineMaterial.SetPass(0))
 			// {
 			// 	for (int i = 0; i <= currentPointMesh; i++)

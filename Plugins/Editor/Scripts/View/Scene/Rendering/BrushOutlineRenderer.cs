@@ -1,10 +1,12 @@
-﻿using UnityEditor;
-using RealtimeCSG.Legacy;
+﻿using RealtimeCSG.Legacy;
 using RealtimeCSG.Components;
 using UnityEngine;
 
 namespace RealtimeCSG
 {
+    /// <summary>
+    /// This here rendering device, renders brush outlines and dots and stuff with brushes in edit-mode.
+    /// </summary>
 	internal class BrushOutlineRenderer
 	{
 		private readonly LineMeshManager _outlinesManager = new LineMeshManager();
@@ -18,6 +20,14 @@ namespace RealtimeCSG
             _polygonManager.Destroy();
 		}
 
+        /// <summary>
+        /// This method updates the data points that are needed to render the brushes.
+        /// It takes the current list of brushes and builds the necessary mesh data which is later used for rendering.
+        /// </summary>
+        /// <param name="camera"></param>
+        /// <param name="brushes"></param>
+        /// <param name="controlMeshes"></param>
+        /// <param name="meshStates"></param>
 		public void Update(Camera camera, CSGBrush[] brushes, ControlMesh[] controlMeshes, ControlMeshState[] meshStates)
 		{
 		    if (brushes.Length == 0)
@@ -85,11 +95,13 @@ namespace RealtimeCSG
 			// _outlinesManager.Render(zTestGenericLineMaterial);
 
 
+            // draw lines that can go behind opaque pixels
             MaterialUtility.LineAlphaMultiplier = .2f;
 			MaterialUtility.LineDashMultiplier = 0f;
 			MaterialUtility.LineThicknessMultiplier = 1f;
 			_edgeColorsManager.Render(noZTestGenericLineMaterial);
    
+            // draw lines that cannot go behind opaque pixels
             MaterialUtility.LineAlphaMultiplier = .75f;
 			MaterialUtility.LineDashMultiplier = 0.0f;
 			MaterialUtility.LineThicknessMultiplier = 1;

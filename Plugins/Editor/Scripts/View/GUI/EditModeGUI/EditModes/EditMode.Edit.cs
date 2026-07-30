@@ -2632,7 +2632,6 @@ namespace RealtimeCSG
                                 GUIUtility.hotControl = 0;
                                 GUIUtility.keyboardControl = 0;
                                 EditorGUIUtility.editingTextField = false;
-                                Event.current.Use();
                                 break;
                             }
 							

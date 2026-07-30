@@ -345,6 +345,7 @@ namespace RealtimeCSG
 			bounds.MaxX = max.x;
 			bounds.MaxY = max.y;
 			bounds.MaxZ = max.z;
+            
 			return bounds;
 		}
 		

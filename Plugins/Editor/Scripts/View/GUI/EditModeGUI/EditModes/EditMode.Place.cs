@@ -307,26 +307,27 @@ namespace RealtimeCSG
 				targetLocalBounds = BoundsUtilities.GetBounds(brushes);
 			}
 
-			if (shouldHideTool && brushes.Length == 0 &&
-				activeTransform.GetComponent<CSGNode>() == null)
+            bool noBrushSelected = shouldHideTool && brushes.Length == 0 && activeTransform.GetComponent<CSGNode>() == null;
+            bool boundsInvalid = !targetLocalBounds.Valid; // this happens, effectively, when brush.length == 0 already.
+            if (noBrushSelected || boundsInvalid)
 			{
 				var bounds = new Bounds();
-				bool found = false;
+				bool hasNonBrushBounds = false;
 				var meshFilter = activeTransform.GetComponent<MeshFilter>();
 				if (meshFilter != null &&
                     meshFilter.sharedMesh)
 				{
 					bounds = meshFilter.sharedMesh.bounds;
-					found = true;
+					hasNonBrushBounds = true;
 				}
 				var meshCollider = activeTransform.GetComponent<MeshCollider>();
 				if (meshCollider != null &&
                     meshCollider.sharedMesh)
 				{
 					bounds = meshCollider.sharedMesh.bounds;
-					found = true;
+					hasNonBrushBounds = true;
 				}
-				if (found)
+				if (hasNonBrushBounds)
 				{
 					if (Tools.pivotRotation == PivotRotation.Local)
 					{

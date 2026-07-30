@@ -2269,7 +2269,6 @@ namespace RealtimeCSG
 							Event.current.Use();
 
 						} else
-						//if (!doCloneDragging)
 						{
 							_doMarquee		= true;
 							_startMousePoint = Event.current.mousePosition;
@@ -2289,8 +2288,9 @@ namespace RealtimeCSG
 								GUIUtility.hotControl = _rectSelectionId;
 								GUIUtility.keyboardControl = _rectSelectionId;
 								EditorGUIUtility.editingTextField = false;
-							} else
-								_doMarquee = false;
+							} else {
+                                _doMarquee = false;
+                            }
 						}
                         if (Event.current.button != 0)
                             break;
@@ -2626,8 +2626,15 @@ namespace RealtimeCSG
 					{
 						case EventType.MouseDrag:
 						{
-							if (Event.current.button != 0)
-								break;
+							if (Event.current.button != 0) {
+                                _doMarquee = false;
+                                _showMarquee = false;
+                                GUIUtility.hotControl = 0;
+                                GUIUtility.keyboardControl = 0;
+                                EditorGUIUtility.editingTextField = false;
+                                Event.current.Use();
+                                break;
+                            }
 							
 							if (!_showMarquee)
 							{

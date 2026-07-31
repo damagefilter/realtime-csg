@@ -2102,6 +2102,12 @@ namespace RealtimeCSG
 								prevDragDifference = MathConstants.zeroVector3;
 								haveDragged = false;
 								settings.CopyBackupVertices();
+                                // moved from mouse up to mouse down because it feels more natural that way
+                                var selectionType = SelectionUtility.GetEventSelectionType();
+                                if (selectionType == SelectionType.Replace) {
+                                    settings.DeselectAll();
+                                }
+                                settings.SelectTangent(i, selectionType);
 								break;
 							}
 							break;
@@ -2196,14 +2202,6 @@ namespace RealtimeCSG
 								Event.current.Use(); 
 
 								ResetVisuals();
-								if (!haveDragged)
-								{
-									var selectionType = SelectionUtility.GetEventSelectionType();
-									if (selectionType == SelectionType.Replace)
-										settings.DeselectAll();
-									settings.SelectTangent(i, selectionType);
-								}
-								break;
 							}
 							break;
 						}
@@ -2284,6 +2282,12 @@ namespace RealtimeCSG
 							prevDragDifference = MathConstants.zeroVector3;
 							haveDragged = false;
 							settings.CopyBackupVertices();
+                            // moved here from mouseUp because it feels more natural
+                            var selectionType = SelectionUtility.GetEventSelectionType();
+                            if (selectionType == SelectionType.Replace)
+                                settings.DeselectAll();
+                            settings.SelectVertex(i, selectionType);
+                            
 							break;
 						}
 						break;
@@ -2416,11 +2420,6 @@ namespace RealtimeCSG
 									break;
 								}
 							}
-
-							var selectionType = SelectionUtility.GetEventSelectionType();
-							if (selectionType == SelectionType.Replace)
-								settings.DeselectAll();
-							settings.SelectVertex(i, selectionType);
 						} else
 						{
 							var removeVertices = new List<int>();
